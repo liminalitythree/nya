@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="errors/errors.fs" />
+    <Compile Include="errors/Errors.fs" />
     <Compile Include="Library.fs" />
     <Compile Include="Parser/Token.fs" />
     <Compile Include="Parser/Lexer.fs" />

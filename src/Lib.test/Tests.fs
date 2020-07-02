@@ -1,12 +1,8 @@
-namespace Lib.test
+module Tests
 
 open System
-open Microsoft.VisualStudio.TestTools.UnitTesting
-open Lib
+open Xunit
 
-[<TestClass>]
-type TestClass () =
-
-    [<TestMethod>]
-    member this.TestMethodPassing () =
-        Assert.IsTrue(false);
+[<Fact>]
+let ``My test`` () =
+    Assert.True(true)

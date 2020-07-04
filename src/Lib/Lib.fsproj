@@ -4,7 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="errors/Errors.fs" />
-    <Compile Include="Parser/Token.fs" />
-    <Compile Include="Parser/Lexer.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.1.1" />
   </ItemGroup>
 </Project>

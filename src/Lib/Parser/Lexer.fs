@@ -42,9 +42,22 @@ module Lexer =
         let t = {t with Current = t.Current + 1}
         (t, t.Source.[t.Current - 1])
     
+    let private peek t =
+        if isAtEnd t then
+            '\u0000'
+        else
+            t.Source.[t.Current]
+    
     let private err t msg =
         (Errors.Error t (lineInfo t) msg) |> ignore
         {t with HadError = true}
+    
+    let rec private comment t : T =
+        if (peek t) <> '\n' && not (isAtEnd t) then
+            let t, _ = advance t
+            comment t
+        else
+            t
 
     let private scanT t =
         let (t, c) = advance t
@@ -59,8 +72,15 @@ module Lexer =
         | '-' -> addE t (Token.Operator Token.Op.Minus)
         | '*' -> addE t (Token.Operator Token.Op.Star)
         | '/' -> addE t (Token.Operator Token.Op.Div)
+        // comment
+        | '#' -> comment t
+        // ignore spaces
+        | ' ' -> t
+        // ignore newlines for now
+        | '\n' -> t
+        | '\r' -> t
         | _ -> err t (sprintf "Unexpected character, %c" c)
- 
+
     let rec scan t =
         if isAtEnd t then
             addE t Token.T.Eof
@@ -68,5 +88,4 @@ module Lexer =
             t
         else
             scan ( scanT { t with Start = t.Current } )
-            
-       
+

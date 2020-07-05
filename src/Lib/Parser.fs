@@ -17,11 +17,17 @@ module Parser =
     
     let private nnumber: NyaParser = pfloat |>> (Number >> Atom)
 
-    let private nidentifier: NyaParser = parse {
-        let! first = letter
-        let! rest = manyChars (letter <|> digit)
-        return Identifier (first.ToString() + rest) |> Atom
-    }
+    let private nIdentifierStr =
+        let isAsciiIdStart c =
+            isAsciiLetter c || c = '_'
+        
+        let isAsciiIdContinue c =
+            isAsciiLetter c || isDigit c || c = '_'
+        
+        identifier (IdentifierOptions(isAsciiIdStart = isAsciiIdStart,
+                                    isAsciiIdContinue = isAsciiIdContinue))
+
+    let private nidentifier = nIdentifierStr |>> (Identifier >> Atom)
 
     let private nstring: NyaParser =
         between (pstring "\"") (pstring "\"") (manySatisfy ((<>) '"')) |>> (String >> Atom)
@@ -29,51 +35,32 @@ module Parser =
     let private natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring
     
-    let private ngroup = parse {
-        do! skipString "("
-        do! ws
-        let! first = opt nexpr
-        let! rest = many (strWs "," >>. nexpr)
-        do! skipString ")"
-        return match first with
-                | Some(first) -> Seq (first :: rest)
-                | None -> Seq []
-    }
+    let private ngroup = strWs "(" >>. sepBy nexpr (strWs ",") .>> strWs ")" |>> Seq
 
-    let private nlist = parse {
-        do! skipString "["
-        do! ws
-        let! first = opt nexpr
-        let! rest = many (strWs "," >>. nexpr)
-        do! skipString "]"
-        return match first with
-                | Some(first) -> Seq (first :: rest)
-                | None -> Seq []
-    }
+    let private nlist = strWs "[" >>. sepBy nexpr (strWs ",") .>> strWs "]" |>> List
 
     let private nprimary =
-        natom <|> nlist <|> ngroup
+        (natom <|> nlist <|> ngroup) .>> ws
 
     let private noperator =
-        pstring "+"
+        strWs "+"
 
-    let private nopapply = parse {
-        let! first = nprimary
-        let! rest = many1 (noperator .>>. nprimary)
+    let private handleNopapply (x: (NyaExpr * (string * NyaExpr) list) ) =
+        let first, xs = x
 
-        let ops = rest |> List.map (fun (x,_) -> x)
-        let things = rest |> List.map (fun (_, y) -> y)
+        if xs.IsEmpty then
+            first
+        else
+            let ops = xs |> List.map (fun (x,_) -> x)
+            let things = xs |> List.map (fun (_, y) -> y)
 
-        let ops = ops |> List.reduce (+) |> Identifier |> Atom
+            let ops = ops |> List.reduce (+) |> Identifier |> Atom
 
-        return Apply ([ops; List things])
-    }
+            Apply ([ops; List (first :: things)])
 
-    let private napply = parse {
-        let! first = nopapply
-        let! rest = many nopapply
-        return Apply (first :: rest)
-    }
+    let private nopapply = nprimary .>>. sepBy (noperator .>>. nprimary) ws |>> handleNopapply
+
+    let private napply = sepBy nopapply ws1 |>> Apply
 
     do nexprImpl := napply .>> ws
 

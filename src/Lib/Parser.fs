@@ -58,9 +58,15 @@ module Parser =
 
             Apply ([ops; List (first :: things)])
 
-    let private nopapply = nprimary .>>. sepBy (noperator .>>. nprimary) ws |>> handleNopapply
+    let private nopapply = nprimary .>>. many (noperator .>>. nprimary) |>> handleNopapply
 
-    let private napply = sepBy nopapply ws1 |>> Apply
+    let private handleNapply (x: NyaExpr list) =
+        if x.Length = 1 then
+            x.[0]
+        else
+            x |> Apply
+
+    let private napply = many nopapply |>> handleNapply
 
     do nexprImpl := napply .>> ws
 

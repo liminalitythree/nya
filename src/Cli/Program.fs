@@ -1,12 +1,16 @@
 ﻿// Learn more about F# at http://fsharp.org
 
 open System
+open FParsec
 
 [<EntryPoint>]
 let main argv =
     ReadLine.HistoryEnabled <- true
     while true do
         let input = ReadLine.Read("~> ")
-        let res = Lib.Lexer.scan (Lib.Lexer.defaultT input "<repl>")
-        printfn "%A" ( res.Tokens |> List.map (fun x -> x.T) ) 
+        let res = Lib.Parser.parse input
+        match res with
+        | Success(result,_,_) -> printfn "Success: %A" result
+        | Failure(errorMsg,_,_) -> printfn "Failure: %s" errorMsg
+
     0 // return an integer exit code

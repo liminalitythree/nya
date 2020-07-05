@@ -5,6 +5,8 @@ open FParsec
 module Parser =
     type NyaParser = Parser<NyaExpr, unit>
 
+    let nexpr, nexprImpl = createParserForwardedToRef()
+
     let ntrue: NyaParser = stringReturn "true" (Atom (Bool true))
     let nfalse: NyaParser = stringReturn "false" (Atom (Bool false))
     
@@ -22,33 +24,42 @@ module Parser =
     let natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring
     
-    let noperator =
-        pstring "+"
-    
     let ngroup = parse {
         do! skipString "("
-        let! first = optional nexpr
+        let! first = opt nexpr
         let! rest = many (pstring "," >>. nexpr)
         do! skipString ")"
-        return Seq (first :: rest)
+        return match first with
+                | Some(first) -> Seq (first :: rest)
+                | None -> Seq []
     }
 
     let nlist = parse {
         do! skipString "["
-        let! first = optional nexpr
+        let! first = opt nexpr
         let! rest = many (pstring "," >>. nexpr)
         do! skipString "]"
-        return List (first :: rest)
+        return match first with
+                | Some(first) -> Seq (first :: rest)
+                | None -> Seq []
     }
 
     let nprimary =
         natom <|> nlist <|> ngroup
 
+    let noperator =
+        pstring "+"
+
     let nopapply = parse {
         let! first = nprimary
         let! rest = many1 (noperator .>>. nprimary)
-        let ops = List.reduce rest (fun x -> x)
-        return Apply ([first])
+
+        let ops = rest |> List.map (fun (x,_) -> x)
+        let things = rest |> List.map (fun (_, y) -> y)
+
+        let ops = ops |> List.reduce (+) |> Identifier |> Atom
+
+        return Apply ([ops; List things])
     }
 
     let napply = parse {
@@ -57,7 +68,7 @@ module Parser =
         return Apply (first :: rest)
     }
 
-    let nexpr = napply
+    do nexprImpl := napply
 
     let nprogram =
         nexpr .>> eof

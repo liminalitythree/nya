@@ -14,16 +14,16 @@ module Parser =
 
     let private ntrue: NyaParser = stringReturn "true" (Atom (Bool true))
     let private nfalse: NyaParser = stringReturn "false" (Atom (Bool false))
-    
+
     let private nnumber: NyaParser = pfloat |>> (Number >> Atom)
 
     let private nIdentifierStr =
         let isAsciiIdStart c =
             isAsciiLetter c || c = '_'
-        
+
         let isAsciiIdContinue c =
             isAsciiLetter c || isDigit c || c = '_'
-        
+
         identifier (IdentifierOptions(isAsciiIdStart = isAsciiIdStart,
                                     isAsciiIdContinue = isAsciiIdContinue))
 
@@ -34,7 +34,7 @@ module Parser =
 
     let private natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring
-    
+
     let private ngroup = strWs "(" >>. sepBy nexpr (strWs ",") .>> strWs ")" |>> Seq
 
     let private nlist = strWs "[" >>. sepBy nexpr (strWs ",") .>> strWs "]" |>> List
@@ -50,6 +50,7 @@ module Parser =
         let first = x.[0]
         x |> List.fold (fun e x -> (x = first) = e = true) true
 
+    // TODO: make multiple calls of the same op return just one op, eg (1 + 1 + 1) = +, , not +_+
     let private handleNopapply (x: (NyaExpr * (string * NyaExpr) list) ) =
         let first, xs = x
 
@@ -77,5 +78,5 @@ module Parser =
 
     let private nprogram =
         nexpr .>> eof
-    
+
     let parse str = run nprogram str

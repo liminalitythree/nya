@@ -45,6 +45,11 @@ module Parser =
     let private noperator =
         strWs "+"
 
+    // if every element in list is equal
+    let private allEqual (x: 'a list): bool =
+        let first = x.[0]
+        x |> List.fold (fun e x -> (x = first) = e = true) true
+
     let private handleNopapply (x: (NyaExpr * (string * NyaExpr) list) ) =
         let first, xs = x
 
@@ -54,7 +59,7 @@ module Parser =
             let ops = xs |> List.map (fun (x,_) -> x)
             let things = xs |> List.map (fun (_, y) -> y)
 
-            let ops = ops |> List.reduce (+) |> Identifier |> Atom
+            let ops = ops |> List.reduce (fun e x -> e + "_" + x) |> Identifier |> Atom
 
             Apply ([ops; List (first :: things)])
 

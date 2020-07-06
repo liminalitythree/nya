@@ -45,7 +45,7 @@ module Parser =
     let private natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring
 
-    let private ngroup = strWs "(" >>. sepBy nexpr (strWs ",") .>> strWs ")" |>> Seq
+    let private ngroup = strWs "{" >>. sepBy nexpr (strWs ";") .>> strWs "}" |>> Seq
 
     let private nlist = strWs "[" >>. sepBy nexpr (strWs ",") .>> strWs "]" |>> List
 

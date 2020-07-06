@@ -26,6 +26,16 @@ module Parser =
 
         identifier (IdentifierOptions(isAsciiIdStart = isAsciiIdStart,
                                     isAsciiIdContinue = isAsciiIdContinue))
+   
+    let private nOpIdentifierStr =
+        let isAsciiIdStart c =
+            c = '@'
+        
+        let isAsciiIdContinue c =
+            isAsciiLetter c || isDigit c
+        
+        identifier (IdentifierOptions(isAsciiIdStart = isAsciiIdStart,
+                                    isAsciiIdContinue = isAsciiIdContinue))
 
     let private nidentifier = nIdentifierStr |>> (Identifier >> Atom)
 
@@ -42,29 +52,45 @@ module Parser =
     let private nprimary =
         (natom <|> nlist <|> ngroup) .>> ws
 
+    let private symbolOperators: Parser<string,unit> =
+        strWs "+" <|> strWs "-" <|> strWs "/" <|> strWs "*" <|> strWs "=" <|> strWs ":"
+
     let private noperator =
-        strWs "+"
+        symbolOperators <|> nOpIdentifierStr .>> ws
 
     // if every element in list is equal
     let private allEqual (x: 'a list): bool =
         let first = x.[0]
         x |> List.fold (fun e x -> (x = first) = e = true) true
 
+    type private PossibleOpT =
+        | Op of string * NyaExpr
+        | NoOp of NyaExpr 
+
+    let private possibleOp =
+        (nprimary |>> NoOp )<|> (noperator .>>. nprimary |>> Op)
+
     // TODO: make multiple calls of the same op return just one op, eg (1 + 1 + 1) = +, , not +_+
-    let private handleNopapply (x: (NyaExpr * (string * NyaExpr) list) ) =
+    let private handleNopapply (x: (PossibleOpT * (string * NyaExpr) list) ) =
         let first, xs = x
 
         if xs.IsEmpty then
-            first
+            match first with
+            | Op(op,expr) -> Apply ([op |> Identifier |> Atom; expr])
+            | NoOp(expr)  -> expr
         else
             let ops = xs |> List.map (fun (x,_) -> x)
             let things = xs |> List.map (fun (_, y) -> y)
 
+            let ops, first = match first with
+                                | Op(op,expr) -> (op :: ops, expr) 
+                                | NoOp(expr)  -> (ops, expr)
+
             let ops = ops |> List.reduce (fun e x -> e + "_" + x) |> Identifier |> Atom
 
             Apply ([ops; List (first :: things)])
-
-    let private nopapply = nprimary .>>. many (noperator .>>. nprimary) |>> handleNopapply
+    
+    let private nopapply = possibleOp .>>. many (noperator .>>. nprimary) |>> handleNopapply
 
     let private handleNapply (x: NyaExpr list) =
         if x.Length = 1 then

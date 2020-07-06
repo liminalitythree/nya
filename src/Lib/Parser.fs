@@ -59,6 +59,7 @@ module Parser =
         symbolOperators <|> nOpIdentifierStr .>> ws
 
     // if every element in list is equal
+    // ! no clue if this works
     let private allEqual (x: 'a list): bool =
         let first = x.[0]
         x |> List.fold (fun e x -> (x = first) = e = true) true

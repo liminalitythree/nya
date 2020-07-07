@@ -11,3 +11,4 @@ type NyaExpr =
     | List of NyaExpr list
     | Apply of NyaExpr * NyaExpr
     | Atom of NyaAtom
+    | Let of string list * NyaExpr

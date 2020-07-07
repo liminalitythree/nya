@@ -54,7 +54,7 @@ module Infer =
             match Map.tryFind s env with
             | Some(t) -> an a t |> AAtom
             | None    -> sprintf "Unknowon identifier: %s" s |> failwith
-
+        
     let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
         match e with
         | Seq(_) | List(_) -> failwith "List and seq are unsupported for now i think"

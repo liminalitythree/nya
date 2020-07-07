@@ -5,10 +5,10 @@ type NyaAtom =
     | Number of float
     | String of string
     | Bool of bool
-    | Lambda of string * NyaExpr
 
-and NyaExpr =
+type NyaExpr =
     | Seq of NyaExpr list
     | List of NyaExpr list
     | Apply of NyaExpr * NyaExpr
     | Atom of NyaAtom
+    | Lambda of string * NyaExpr

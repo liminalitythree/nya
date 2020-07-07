@@ -43,7 +43,7 @@ module Parser =
         between (pstring "\"") (pstring "\"") (manySatisfy ((<>) '"')) |>> (String >> Atom)
 
     let private nlambdaChar = pstring "\\" <|> pstring "λ"
-    let private nlambda = (nlambdaChar >>. nIdentifierStr .>> strWs ".") .>>. nexpr |>> (Lambda >> Atom)
+    let private nlambda = (nlambdaChar >>. nIdentifierStr .>> strWs ".") .>>. nexpr |>> Lambda 
 
     let private natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring <|> nlambda

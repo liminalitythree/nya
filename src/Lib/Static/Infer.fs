@@ -20,6 +20,7 @@ module Infer =
         | AList of A<ANyaExpr list>
         | AApply of A<ANyaExpr * ANyaExpr>
         | AAtom of A<NyaAtom>
+        | ALambda of A<A<string> * ANyaExpr>
 
     let private typeOfAExpr e =
         match e with
@@ -65,3 +66,10 @@ module Infer =
             let af = annotateExpr f env gen
             let ax = annotateExpr x env gen
             an (af, ax) (gen.Gen()) |> AApply
+        
+        | Lambda(x, e) ->
+            let ax = an x (gen.Gen())
+            let newEnv = ref ((!env).Add(x, ax.T))
+            let ae = annotateExpr e newEnv gen
+            let alam = an (ax, ae) ((ax.T, (typeOfAExpr ae)) |> Type.Fun)
+            alam |> ALambda

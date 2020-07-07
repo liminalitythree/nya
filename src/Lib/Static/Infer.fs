@@ -21,6 +21,13 @@ module Infer =
         | AApply of A<ANyaExpr * ANyaExpr>
         | AAtom of A<NyaAtom>
 
+    let private typeOfAExpr e =
+        match e with
+        | ASeq(t)   -> t.T
+        | AList(t)  -> t.T
+        | AApply(t) -> t.T
+        | AAtom(t)  -> t.T
+
     // =================================================================
     // generates generic types maybe
     // =================================================================
@@ -46,7 +53,7 @@ module Infer =
         | Identifier(s) ->
             match Map.tryFind s env with
             | Some(t) -> an a t |> AAtom
-            | None    -> sprintf "Unknwon variable: %s" s |> failwith
+            | None    -> sprintf "Unknowon identifier: %s" s |> failwith
 
     let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
         match e with
@@ -57,8 +64,4 @@ module Infer =
         | Apply(f, x) ->
             let af = annotateExpr f env gen
             let ax = annotateExpr x env gen
-
-            // ! this is probably bad and should maybe be replaced
-            // handling let
-
             an (af, ax) (gen.Gen()) |> AApply

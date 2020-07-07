@@ -5,7 +5,7 @@ module Type =
         | Num
         | Bool
         | String
-        | Fun of T * T
+        | Lambda of T * T
         // binds T to string
         | Let of string * T
         // type variable
@@ -17,7 +17,7 @@ module Type =
         | Bool   -> "bool"
         | String -> "string"
 
-        | Fun(fn, arg) ->
+        | Lambda(fn, arg) ->
             sprintf "%s -> %s" (toString fn) (toString arg)
 
         | Let(v, defn) ->

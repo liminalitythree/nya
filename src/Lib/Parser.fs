@@ -42,8 +42,11 @@ module Parser =
     let private nstring: NyaParser =
         between (pstring "\"") (pstring "\"") (manySatisfy ((<>) '"')) |>> (String >> Atom)
 
+    let private nlambdaChar = pstring "\\" <|> pstring "λ"
+    let private nlambda = (nlambdaChar >>. nIdentifierStr .>> strWs ".") .>>. nexpr |>> (Lambda >> Atom)
+
     let private natom =
-        ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring
+        ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring <|> nlambda
 
     let private ngroup = strWs "{" >>. sepBy nexpr (strWs ";") .>> strWs "}" |>> Seq
 
@@ -83,7 +86,6 @@ module Parser =
         afl x None
 
     let private handleNapply (x: NyaExpr list) =
-        printfn "%A" x
         if x.Length = 1 then
             x.[0]
         else

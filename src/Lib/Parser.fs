@@ -77,7 +77,7 @@ module Parser =
 
         if xs.IsEmpty then
             match first with
-            | Op(op,expr) -> Apply ([op |> Identifier |> Atom; expr])
+            | Op(op,expr) -> Apply (op |> Identifier |> Atom, expr)
             | NoOp(expr)  -> expr
         else
             let ops = xs |> List.map (fun (x,_) -> x)
@@ -89,15 +89,33 @@ module Parser =
 
             let ops = ops |> List.reduce (fun e x -> e + "_" + x) |> Identifier |> Atom
 
-            Apply ([ops; List (first :: things)])
+            Apply (ops, List (first :: things))
     
     let private nopapply = possibleOp .>>. many (noperator .>>. nprimary) |>> handleNopapply
+
+    let private applyFromList (x: NyaExpr list) =
+        let rec afl (x: NyaExpr list) (a: Option<NyaExpr>) : NyaExpr =
+            if x.Length <= 0 then
+                match a with
+                | None    -> failwith "this shouldn't be reachable i think"
+                | Some(a) -> a
+            else
+                match a with
+                | None ->
+                    if x.Length < 2 then
+                        failwith "this shouldn't be possible i think"
+                    else
+                        afl x.[2..] (Some (Apply (x.[0], x.[1])))
+                
+                | Some(a) ->
+                    afl x.[1..] (Some (Apply (a, x.[0])))
+        afl x None
 
     let private handleNapply (x: NyaExpr list) =
         if x.Length = 1 then
             x.[0]
         else
-            x |> Apply
+            applyFromList x
 
     let private napply = many nopapply |>> handleNapply
 

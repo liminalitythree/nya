@@ -9,5 +9,5 @@ type NyaAtom =
 type NyaExpr =
     | Seq of NyaExpr list
     | List of NyaExpr list
-    | Apply of NyaExpr list
+    | Apply of NyaExpr * NyaExpr
     | Atom of NyaAtom

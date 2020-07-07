@@ -7,6 +7,7 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Static/Type.fs" />
+    <Compile Include="Static/Infer.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />

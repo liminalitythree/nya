@@ -13,7 +13,7 @@ module Infer =
     // wraps the annotate generic in easy function i think maybe
     let private an e v =
         { T = v ; E = e}
-        
+
     // Annotated Expression
     type ANyaExpr =
         | ASeq of A<ANyaExpr list>
@@ -21,36 +21,44 @@ module Infer =
         | AApply of A<ANyaExpr * ANyaExpr>
         | AAtom of A<NyaAtom>
 
-    type private Stateful() =
+    // =================================================================
+    // generates generic types maybe
+    // =================================================================
+    type private TypeGenerator() =
         // for generating unique generic variable names
         let typeNumber = ref 1
 
-        let env = ref Map.empty<string, Type.T>
-        
-        let genNewType =
+        member this.Gen () =
             let c1 = !typeNumber
             incr typeNumber
             Type.Ident ("t^" + c1.ToString())
-        
-        let annotateAtom a =
-            match a with
-            | Number        -> an a Type.Num    |> AAtom
-            | Bool          -> an a Type.Bool   |> AAtom
-            | String        -> an a Type.String |> AAtom
-            | Identifier(s) ->
-                match Map.tryFind s !env with
-                | Some(t) -> an a t |> AAtom
-                | None    -> sprintf "Unknwon variable: %s" s |> failwith
 
+    // =================================================================
+    // annotate ast with types
+    // =================================================================
+    let defaultEnv = ref Map.empty<string, Type.T>
 
-        let rec annotateExpr (e: NyaExpr) : ANyaExpr =
-            match e with
-            | Seq(_) | List(_) -> failwith "List and seq are unsupported for now i think"
+    let annotateAtom a env =
+        match a with
+        | Number        -> an a Type.Num    |> AAtom
+        | Bool          -> an a Type.Bool   |> AAtom
+        | String        -> an a Type.String |> AAtom
+        | Identifier(s) ->
+            match Map.tryFind s env with
+            | Some(t) -> an a t |> AAtom
+            | None    -> sprintf "Unknwon variable: %s" s |> failwith
 
-            | Atom(a) -> annotateAtom a
+    let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
+        match e with
+        | Seq(_) | List(_) -> failwith "List and seq are unsupported for now i think"
 
-            | Apply(f, x) ->
-                let af = annotateExpr f
-                let ax = annotateExpr x
-                an (af, ax) genNewType |> AApply
-            
+        | Atom(a) -> annotateAtom a !env
+
+        | Apply(f, x) ->
+            let af = annotateExpr f env gen
+            let ax = annotateExpr x env gen
+
+            // ! this is probably bad and should maybe be replaced
+            // handling let
+
+            an (af, ax) (gen.Gen()) |> AApply

@@ -120,11 +120,8 @@ module Parser =
 
     let private nopapply = possibleOp .>>. many (noperator .>>. napply) |>> handleNopapply
 
-    let private nletIdentifierList = many1 (nIdentifierStr .>> ws)
-    let private nlet = ((pstring "let" >>. ws1 >>. nletIdentifierList .>> ws .>> strWs "=") .>>. nopapply |>> Let)
-                        <|> nopapply
 
-    do nexprImpl := nlet .>> ws
+    do nexprImpl := nopapply .>> ws
 
     let private nprogram =
         nexpr .>> eof

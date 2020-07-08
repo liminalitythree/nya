@@ -21,6 +21,7 @@ module Infer =
         | AApply of A<ANyaExpr * ANyaExpr>
         | AAtom of A<NyaAtom>
         | ALambda of A<A<string> * ANyaExpr>
+        | ALet of A<string * ANyaExpr>
 
     let typeOfAExpr e =
         match e with
@@ -29,6 +30,7 @@ module Infer =
         | AApply(t)  -> t.T
         | AAtom(t)   -> t.T
         | ALambda(t) -> t.T
+        | ALet(t)    -> t.T
 
     // =================================================================
     // generates generic types maybe
@@ -74,6 +76,13 @@ module Infer =
             let ae = annotateExpr e newEnv gen
             let alam = an (ax, ae) ((ax.T, (typeOfAExpr ae)) |> Type.Lambda)
             alam |> ALambda
+        
+        | Let (i, e) ->
+            let ae = annotateExpr e env gen
+            let t = typeOfAExpr ae
+            env := (!env).Add(i, t)
+            an (i, ae) t |> ALet
+
 
     // =================================================================
     // collect type constraints
@@ -84,6 +93,11 @@ module Infer =
     let rec collectExpr (ae: ANyaExpr) : Constrait list =
         match ae with
         | ASeq(_) | AList(_) -> failwith "List and seq are unsupported for now i think"
+
+        // ! i dont know whether this is right
+        | ALet(e) ->
+            let _,expr = e.E
+            collectExpr expr
 
         // no constraints to impose on literals & identifier gives us no info maybe
         // ! i hope this is correct
@@ -170,6 +184,11 @@ module Infer =
     let rec private applyExpr (subs: Substitutions) (ae: ANyaExpr) : ANyaExpr =
         match ae with
         | ASeq(_) | AList(_) -> failwith "List and seq are unsupported for now i think"
+
+        // ! i don't know whether this is right maybe
+        | ALet(e) ->
+            let _,expr = e.E
+            applyExpr subs expr
 
         | AAtom(atom) ->
             an atom.E (apply subs atom.T) |> AAtom

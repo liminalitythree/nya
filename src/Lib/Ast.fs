@@ -12,3 +12,4 @@ type NyaExpr =
     | Apply of NyaExpr * NyaExpr
     | Atom of NyaAtom
     | Lambda of string * NyaExpr
+    | Let of string * NyaExpr

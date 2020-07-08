@@ -6,8 +6,6 @@ module Type =
         | Bool
         | String
         | Lambda of T * T
-        // binds T to string
-        | Let of string * T
         // type variable
         | Ident of string
 
@@ -20,11 +18,4 @@ module Type =
         | Lambda(fn, arg) ->
             sprintf "%s -> %s" (toString fn) (toString arg)
 
-        | Let(v, defn) ->
-            sprintf "(let %s = %s)" v (toString defn)
-
         | Ident(s) -> "'" + s
-
-
-
-

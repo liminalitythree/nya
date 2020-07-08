@@ -116,9 +116,10 @@ module Parser =
                                 | Op(op,expr) -> (op :: ops, expr)
                                 | NoOp(expr)  -> (ops, expr)
 
-            let ops = ops |> List.reduce (fun e x -> e + "_" + x) |> Identifier |> Atom
+            let fn = ops |> List.reduce (fun e x -> e + "_" + x) |> Identifier |> Atom
+            let args = first :: things
 
-            Apply (ops, List (first :: things))
+            applyFromList (fn :: args)
 
     let private nopapply = possibleOp .>>. many (noperator .>>. napply) |>> handleNopapply
 

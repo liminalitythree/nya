@@ -61,7 +61,15 @@ module Infer =
 
     let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
         match e with
-        | Seq(_) | List(_) -> failwith "List and seq are unsupported for now i think"
+        | List(_) -> failwith "List is unsupported for now i think"
+
+        | Seq(seq) ->
+            let newEnv = ref env.Value
+            let lastt = typeOfAExpr (annotateExpr seq.[seq.Length - 1] env gen)
+            (seq.Tail |> List.fold
+                (fun acc x -> acc @ [annotateExpr x newEnv gen])
+                [annotateExpr seq.Head newEnv gen]
+            |> an) lastt |> ASeq
 
         | Atom(a) -> annotateAtom a !env
 
@@ -92,7 +100,12 @@ module Infer =
 
     let rec collectExpr (ae: ANyaExpr) : Constrait list =
         match ae with
-        | ASeq(_) | AList(_) -> failwith "List and seq are unsupported for now i think"
+        | AList(_) -> failwith "List is unsupported for now i think"
+
+        | ASeq(seq) ->
+            let cs = seq.E.Tail |> List.fold (fun e x -> e @ (collectExpr x)) (collectExpr seq.E.Head)
+            cs @ [(typeOfAExpr seq.E.Head, seq.T)]
+
 
         // ! i dont know whether this is right
         | ALet(e) ->
@@ -183,7 +196,13 @@ module Infer =
     // applies a final set of substitutions on the annotated expr
     let rec private applyExpr (subs: Substitutions) (ae: ANyaExpr) : ANyaExpr =
         match ae with
-        | ASeq(_) | AList(_) -> failwith "List and seq are unsupported for now i think"
+        | AList(_) -> failwith "List is unsupported for now i think"
+
+        | ASeq(seq) ->
+            let e = seq.E
+            let applied = e |> List.map (fun x -> applyExpr subs x)
+            an applied (apply subs seq.T) |> ASeq
+
 
         // ! i don't know whether this is right maybe
         | ALet(e) ->

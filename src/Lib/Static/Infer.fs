@@ -65,11 +65,11 @@ module Infer =
 
         | Seq(seq) ->
             let newEnv = ref env.Value
-            let lastt = typeOfAExpr (annotateExpr seq.[seq.Length - 1] env gen)
             (seq.Tail |> List.fold
                 (fun acc x -> acc @ [annotateExpr x newEnv gen])
                 [annotateExpr seq.Head newEnv gen]
-            |> an) lastt |> ASeq
+            |> an) (typeOfAExpr (annotateExpr seq.[seq.Length - 1] newEnv gen))
+            |> ASeq
 
         | Atom(a) -> annotateAtom a !env
 

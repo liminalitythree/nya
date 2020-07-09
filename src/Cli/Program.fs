@@ -3,12 +3,16 @@
 open System
 open FParsec
 
+open Lib
+
 [<EntryPoint>]
 let main argv =
     ReadLine.HistoryEnabled <- true
 
     let env = ref Map.empty<string, Lib.Type.T>
-    
+
+    env := (!env).Add("+", Type.Lambda (Type.Num, (Type.Lambda (Type.Num, Type.Num))))
+
     while true do
         let input = ReadLine.Read("~> ")
         let res = Lib.Parser.parse input

@@ -35,7 +35,7 @@ module Infer =
     // =================================================================
     // generates generic types maybe
     // =================================================================
-    type private TypeGenerator() =
+    type TypeGenerator() =
         // for generating unique generic variable names
         let typeNumber = ref 1
 
@@ -84,7 +84,7 @@ module Infer =
             let ae = annotateExpr e newEnv gen
             let alam = an (ax, ae) ((ax.T, (typeOfAExpr ae)) |> Type.Lambda)
             alam |> ALambda
-        
+
         | Let (i, e) ->
             let ae = annotateExpr e env gen
             let t = typeOfAExpr ae
@@ -233,3 +233,22 @@ module Infer =
         let constraints = collectExpr annotatedExpr
         let subs = unify constraints
         applyExpr subs annotatedExpr
+
+    type IncrementalInfer = {
+        Env: Environment ref;
+        Gen: TypeGenerator;
+        Constraints: Option<Constrait list>;
+    }
+
+    let incrementalFromEnv env =
+        { Env = env ; Gen = TypeGenerator () ; Constraints = None }
+
+    // this is for inferring things in the same space thing in the repl maybe
+    let incrementalInfer (t: IncrementalInfer) (e: NyaExpr) =
+        let annotatedExpr = annotateExpr e t.Env t.Gen
+        let constraints = collectExpr annotatedExpr
+        let constraints = match t.Constraints with
+                            | None -> constraints
+                            | Some(prev) -> prev @ constraints
+        let subs = unify constraints
+        ((applyExpr subs annotatedExpr), { t with Constraints = Some constraints })

@@ -24,6 +24,11 @@ let main argv =
     // ! ex
     // ! > (let f = \x.(let a = x + 2; a); f "hi")
     // ! type error
+
+    // ! likely because the constraints are getting reset with each call to infer
+    // ! i think?
+    // ! maybe...
+    // ! maybe
     while true do
         let input = ReadLine.Read("~> ")
         let res = Lib.Parser.parse input

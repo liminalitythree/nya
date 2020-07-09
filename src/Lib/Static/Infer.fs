@@ -104,7 +104,7 @@ module Infer =
 
         | ASeq(seq) ->
             let cs = seq.E.Tail |> List.fold (fun e x -> e @ (collectExpr x)) (collectExpr seq.E.Head)
-            cs @ [(typeOfAExpr seq.E.Head, seq.T)]
+            cs @ [(typeOfAExpr seq.E.[seq.E.Length - 1], seq.T)]
 
 
         // ! i dont know whether this is right

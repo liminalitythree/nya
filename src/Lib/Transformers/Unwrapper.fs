@@ -1,5 +1,3 @@
-namespace Lib
-
 // TODO:
 // this is just a guess of what would be good
 // move all sequences and lambdas to top level
@@ -9,3 +7,8 @@ namespace Lib
 // maybe change constant/non-ref atoms (strings, numbers, bools, etc) to a seperate type
 // possibly replace references to variables that are constants with the constant
 // maybe
+
+namespace Lib
+
+module Unwrapper =
+    let a = 2

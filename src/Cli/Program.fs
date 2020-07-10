@@ -7,6 +7,7 @@ open Lib
 
 [<EntryPoint>]
 let main argv =
+    Codegen.test ()
     ReadLine.HistoryEnabled <- true
 
     let env = ref Map.empty<string, Lib.Type.T>

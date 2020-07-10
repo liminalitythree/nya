@@ -14,6 +14,10 @@ module Infer =
     let private an e v =
         { T = v ; E = e}
 
+    // takes the arguments the other way around maybe
+    let private annotate v e =
+        { T = v ; E = e}
+
     // Annotated Expression
     type ANyaExpr =
         | ASeq of A<ANyaExpr list>

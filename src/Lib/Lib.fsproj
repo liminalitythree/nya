@@ -9,6 +9,7 @@
     <Compile Include="Static/Type.fs" />
     <Compile Include="Static/Infer.fs" />
     <Compile Include="Codegen/codegen.fs" />
+    <Compile Include="Transformers/Unwrapper.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />

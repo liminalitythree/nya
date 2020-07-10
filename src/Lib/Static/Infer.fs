@@ -15,7 +15,7 @@ module Infer =
         { T = v ; E = e}
 
     // takes the arguments the other way around maybe
-    let private annotate v e =
+    let annotate v e =
         { T = v ; E = e}
 
     // Annotated Expression

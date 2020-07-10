@@ -121,6 +121,8 @@ module Parser =
 
             applyFromList (fn :: args)
 
+    // TODO: fix bug where it wont put the operator in the ast when there is no space after the operator
+    // eg: 2 +2
     let private nopapply = possibleOp .>>. many (noperator .>>. napply) |>> handleNopapply
 
     let private nlet = (strWs "let" >>. nIdentifierStr .>> ws .>> strWs "=" .>>. nexpr) |>> Let

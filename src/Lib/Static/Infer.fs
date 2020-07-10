@@ -26,15 +26,17 @@ module Infer =
         | AAtom of A<NyaAtom>
         | ALambda of A<A<string> * ANyaExpr>
         | ALet of A<string * ANyaExpr>
+        | ALetrec of Type.T * A<string * ANyaExpr>
 
     let typeOfAExpr e =
         match e with
-        | ASeq(t)    -> t.T
-        | AList(t)   -> t.T
-        | AApply(t)  -> t.T
-        | AAtom(t)   -> t.T
-        | ALambda(t) -> t.T
-        | ALet(t)    -> t.T
+        | ASeq(t)      -> t.T
+        | AList(t)     -> t.T
+        | AApply(t)    -> t.T
+        | AAtom(t)     -> t.T
+        | ALambda(t)   -> t.T
+        | ALet(t)      -> t.T
+        | ALetrec(_,t) -> t.T
 
     // =================================================================
     // generates generic types maybe
@@ -89,12 +91,19 @@ module Infer =
             let alam = an (ax, ae) ((ax.T, (typeOfAExpr ae)) |> Type.Lambda)
             alam |> ALambda
 
-        | Let (i, e) ->
+        | Let(i, e) ->
             let ae = annotateExpr e env gen
             let t = typeOfAExpr ae
             env := (!env).Add(i, t)
             an (i, ae) t |> ALet
 
+        | Letrec(i, e) ->
+            let recType = gen.Gen()
+            let newEnv = ref ((!env).Add(i, recType))
+            let ae = annotateExpr e newEnv gen
+            let t = typeOfAExpr ae
+            env := (!env).Add(i, t)
+            (recType, (an (i, ae) t)) |> ALetrec
 
     // =================================================================
     // collect type constraints
@@ -115,6 +124,10 @@ module Infer =
         | ALet(e) ->
             let _,expr = e.E
             collectExpr expr
+
+        | ALetrec(t, e) ->
+            let _,expr = e.E
+            [(t, e.T)] @ collectExpr expr
 
         // no constraints to impose on literals & identifier gives us no info maybe
         // ! i hope this is correct
@@ -209,7 +222,7 @@ module Infer =
 
 
         // ! i don't know whether this is right maybe
-        | ALet(e) ->
+        | ALet(e) | ALetrec(_,e) ->
             let _,expr = e.E
             applyExpr subs expr
 

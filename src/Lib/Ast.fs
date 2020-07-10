@@ -13,3 +13,4 @@ type NyaExpr =
     | Atom of NyaAtom
     | Lambda of string * NyaExpr
     | Let of string * NyaExpr
+    | Letrec of string * NyaExpr

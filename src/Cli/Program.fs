@@ -21,6 +21,7 @@ let main argv =
         let res = Parser.parse input
         match res with
         | Success(result,_,_) ->
+            printfn "%A" result
             let (annotated,inc) = Infer.incrementalInfer inc result
             printfn "%s" (Type.toString (Infer.typeOfAExpr annotated))
             repl inc

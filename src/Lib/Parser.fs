@@ -125,7 +125,15 @@ module Parser =
     // eg: 2 +2
     let private nopapply = possibleOp .>>. many (noperator .>>. napply) |>> handleNopapply
 
-    let private nlet = (strWs "let" >>. nIdentifierStr .>> ws .>> strWs "=" .>>. nexpr) |>> Let
+    let private handleNlet x =
+        let a,expr = x
+        let isrec,ident = a
+        match isrec with
+        | Some(_) -> (ident, expr) |> Letrec
+        | None    -> (ident, expr) |> Let
+
+    let private nlet = (strWs "let" >>.
+                            ((opt (strWs "rec") .>>. (nIdentifierStr .>> ws .>> strWs "=") .>>. nexpr) |>> handleNlet))
                         <|> nopapply
 
     do nexprImpl := nlet .>> ws

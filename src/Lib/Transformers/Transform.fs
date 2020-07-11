@@ -17,19 +17,13 @@ module Transform =
     // =================================================================
     // Renaming all variables to unique names
 
-    type UniqueNameGenerator () =
-        let curid = ref 1
-
-        member this.Gen () =
-            incr curid
-            (!curid - 1).ToString()
-
-    let private genAndAdd (gen: UniqueNameGenerator) (localEnv: Map<string,string> ref) old =
+    let private genAndAdd (gen: Util.IdGen) (localEnv: Map<string,string> ref) old =
         let newName = gen.Gen()
         localEnv := ((!localEnv).Add(old, newName))
         newName
 
-    let rec transformUniqueNames (localEnv: Map<string, string> ref) (gen: UniqueNameGenerator) (expr: ANyaExpr) : ANyaExpr =
+    // gives every variable/identifier to a unique name maybe
+    let rec transformUniqueNames (localEnv: Map<string, string> ref) (gen: Util.IdGen) (expr: ANyaExpr) : ANyaExpr =
         match expr with
         | AList(_) -> failwith "list is not supported for now maybe"
 

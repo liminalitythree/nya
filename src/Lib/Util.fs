@@ -26,3 +26,12 @@ module Util =
         | _ -> (l, expr)
 
     let unCurry = doUnCurry []
+
+    // =============================================
+    // unique id generator maybe
+    type IdGen (prefix: string) =
+        let curid = ref 1
+
+        member __.Gen () =
+            incr curid
+            prefix + ((!curid - 1).ToString())

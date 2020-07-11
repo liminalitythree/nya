@@ -3,7 +3,7 @@ namespace Lib
 open Infer
 
 module LambdaLift =
-    // note, may have duplicates
+    // note, returned list may have duplicates
     // ignore - list of variables/identifiers to ignore maybe
     let rec getFreeVariables (ignore: string list) (expr: ANyaExpr) : string list =
         match expr with

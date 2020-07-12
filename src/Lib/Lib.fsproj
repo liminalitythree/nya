@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="errors/Errors.fs" />
+    <Compile Include="Misc.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Static/Type.fs" />

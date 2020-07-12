@@ -66,7 +66,7 @@ module LambdaLift =
         | ASeq(seq) ->
             let l,m = seq.E
                     |> List.map lambdaLift
-                    |> List.fold (fun (e,emap) (exp,map) -> (e @ [exp]), (mergeMaps emap map)) ([], Map.empty<LambdaId,LNyaExpr>)
+                    |> List.fold (fun (e,emap) (exp,map) -> (e @ [exp]), (mergeMaps emap map)) ([], Map.empty<LambdaId,LiftedLambda>)
 
             ((l |> annotate seq.T |> LSeq), m)
 
@@ -89,7 +89,11 @@ module LambdaLift =
             let lInnerExp,lmap = lambdaLift innerExp
             let lId = gen.Gen()
             let lref = (lId, (args |> List.map (fun x -> x.T)), lam.T) |> LLambdaRef
-            (lref, lmap.Add(lId, lInnerExp))
+            let llambda = {
+                Id = lId;
+                Args = args;
+                Expr = lInnerExp; }
+            (lref, lmap.Add(lId, llambda))
 
         | ALet(lett) ->
             let i,expr = lett.E

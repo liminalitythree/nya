@@ -57,9 +57,9 @@ module Infer =
 
     let private annotateAtom a env =
         match a with
-        | Number        -> an a Type.Num    |> AAtom
-        | Bool          -> an a Type.Bool   |> AAtom
-        | String        -> an a Type.String |> AAtom
+        | Number(_)     -> an a Type.Num    |> AAtom
+        | Bool(_)       -> an a Type.Bool   |> AAtom
+        | String(_)     -> an a Type.String |> AAtom
         | Identifier(s) ->
             match Map.tryFind s env with
             | Some(t) -> an a t |> AAtom

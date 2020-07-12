@@ -99,13 +99,10 @@ module LambdaLift =
                 args
                 |> List.fold (fun (e: Set<string>) x -> e.Add x.E) (Set.empty<string>)
 
-            printfn "IGNORE: %A" ignore
-
             let freeVars =
                 (getFreeVarsNoDupes exp ignore)
                 |> List.map (fun (i, t) -> i |> annotate t)
 
-            printfn "FREEVARS: %A" freeVars
             let args = freeVars @ args
 
             let lInnerExp, lmap = lambdaLift innerExp

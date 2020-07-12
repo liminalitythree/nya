@@ -48,12 +48,12 @@ module Parser =
     let private natom =
         ntrue <|> nfalse <|> nnumber <|> nidentifier <|> nstring <|> nlambda
 
-    let private ngroup = strWs "(" >>. sepBy nexpr (strWs ";") .>> strWs ")" |>> Seq
+    let private nseq = strWs "(" >>. sepBy nexpr (strWs ";") .>> strWs ")" |>> Seq
 
     let private nlist = strWs "[" >>. sepBy nexpr (strWs ",") .>> strWs "]" |>> List
 
     let private nprimary =
-        (natom <|> nlist <|> ngroup) .>> ws
+        (natom <|> nlist <|> nseq) .>> ws
 
     let private symbolOperators: Parser<string,unit> =
         strWs "+" <|> strWs "-" <|> strWs "/" <|> strWs "*" <|> strWs "=" <|> strWs ":"

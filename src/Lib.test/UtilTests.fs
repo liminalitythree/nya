@@ -3,7 +3,7 @@ module UtilTests
 open System
 open Xunit
 open Xunit.Abstractions
-open FsUnit.Xunit
+open Swensen.Unquote
 open Lib
 open Lib.Infer
 
@@ -31,14 +31,14 @@ type CurryTests(output: ITestOutputHelper) =
             (arg1, (arg2, (arg3, expr) |> lambdaNum) |> lambdaNum)
             |> lambdaNum
 
-        expected |> should equal res
+        test <@ expected = res @>
 
     [<Fact>]
     member __.``Curry and Uncurry``() =
         let curried = Util.curry args expr Type.Num
         let unCurried = Util.unCurry curried
 
-        unCurried |> should equal (args, expr)
+        test <@ unCurried = (args, expr) @>
 
     [<Fact>]
     member __.``Uncurry returns correct amount of args when there is only 1 arg``() =
@@ -49,6 +49,5 @@ type CurryTests(output: ITestOutputHelper) =
 
         let args, _ = Util.unCurry curried
 
-        args.Length |> should equal 1
-        args.[0]
-        |> should equal ("x" |> annotate Type.Num)
+        test <@ args.Length = 1 @>
+        test <@ args.[0] = ("x" |> annotate Type.Num) @>

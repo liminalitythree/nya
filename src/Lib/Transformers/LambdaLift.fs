@@ -23,11 +23,7 @@ module LambdaLift =
             | Number (_)
             | String (_)
             | Bool (_) -> []
-            | Identifier (ident) ->
-                if ignore.Contains ident then
-                    []
-                else
-                    [ (ident, atom.T) ]
+            | Identifier (ident) -> if ignore.Contains ident then [] else [ (ident, atom.T) ]
 
         | ALambda (lam) ->
             let arg, expr = lam.E
@@ -99,7 +95,10 @@ module LambdaLift =
             let _, exp = lam.E
             let args, innerExp = Util.unCurry expr
 
-            let ignore = args |> List.fold (fun (e: Set<string>) x -> e.Add x.E) (Set.empty<string>)
+            let ignore =
+                args
+                |> List.fold (fun (e: Set<string>) x -> e.Add x.E) (Set.empty<string>)
+
             printfn "IGNORE: %A" ignore
 
             let freeVars =
@@ -121,7 +120,17 @@ module LambdaLift =
                   Args = args
                   Expr = lInnerExp }
 
-            (lref, lmap.Add(lId, llambda))
+            if freeVars.IsEmpty then
+                (lref, lmap.Add(lId, llambda))
+            else
+                let lapply =
+                    freeVars
+                    |> List.fold (fun acc x ->
+                        (acc, (x.E |> Identifier |> annotate x.T |> LAtom))
+                        |> annotate (typeOfAExpr innerExp)
+                        |> LApply) (lref)
+
+                (lapply, lmap.Add(lId, llambda))
 
         | ALet (lett) ->
             let i, expr = lett.E

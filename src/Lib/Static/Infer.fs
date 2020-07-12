@@ -134,10 +134,10 @@ module Infer =
         | AAtom(_) -> []
 
         | ALambda(t) ->
-            let _,ae = t.E
+            let i,ae = t.E
             match t.T with
-            | Type.Lambda(_, e) ->
-                (collectExpr ae) @ [(typeOfAExpr ae, e)]
+            | Type.Lambda(it, e) ->
+                (collectExpr ae) @ [(typeOfAExpr ae, e); (i.T, it)]
             | _ -> failwith "not a lambda"
 
         // this is copy-pasted :)
@@ -231,7 +231,8 @@ module Infer =
 
         | ALambda(lam) ->
             let id,e = lam.E
-            an (id, applyExpr subs e) (apply subs lam.T) |> ALambda
+            let idt = id.E |> annotate (apply subs id.T)
+            an (idt, applyExpr subs e) (apply subs lam.T) |> ALambda
 
         | AApply(app) ->
             let fn,arg = app.E

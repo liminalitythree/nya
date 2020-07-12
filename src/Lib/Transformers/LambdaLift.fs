@@ -5,7 +5,7 @@ open Infer
 module LambdaLift =
     // note, returned list may have duplicates
     // ignore - list of variables/identifiers to ignore maybe
-    let rec private getFreeVariables (ignore: string list) (expr: ANyaExpr): (string * Type.T) list =
+    let rec private getFreeVariables (ignore: Set<string>) (expr: ANyaExpr): (string * Type.T) list =
         match expr with
         | AList (_) -> failwith "lists are not supported yet i think maybe sorry maybe"
 
@@ -23,11 +23,15 @@ module LambdaLift =
             | Number (_)
             | String (_)
             | Bool (_) -> []
-            | Identifier (ident) -> [ (ident, atom.T) ]
+            | Identifier (ident) ->
+                if ignore.Contains ident then
+                    []
+                else
+                    [ (ident, atom.T) ]
 
         | ALambda (lam) ->
             let arg, expr = lam.E
-            getFreeVariables (ignore @ [ arg.E ]) expr
+            getFreeVariables (ignore.Add arg.E) expr
 
         | ALet (lett) ->
             let _, expr = lett.E
@@ -35,10 +39,10 @@ module LambdaLift =
 
         | ALetrec (_, letrec) ->
             let self, expr = letrec.E
-            getFreeVariables (ignore @ [ self ]) expr
+            getFreeVariables (ignore.Add self) expr
 
-    let getFreeVarsNoDupes expr =
-        getFreeVariables [] expr
+    let getFreeVarsNoDupes expr ignore =
+        getFreeVariables ignore expr
         |> Seq.distinct
         |> Seq.toList
 
@@ -92,13 +96,17 @@ module LambdaLift =
         | AAtom (atom) -> (atom |> LAtom), Map.empty
 
         | ALambda (lam) ->
-            let arg, exp = lam.E
+            let _, exp = lam.E
             let args, innerExp = Util.unCurry expr
 
+            let ignore = args |> List.fold (fun (e: Set<string>) x -> e.Add x.E) (Set.empty<string>)
+            printfn "IGNORE: %A" ignore
+
             let freeVars =
-                (getFreeVarsNoDupes exp)
+                (getFreeVarsNoDupes exp ignore)
                 |> List.map (fun (i, t) -> i |> annotate t)
 
+            printfn "FREEVARS: %A" freeVars
             let args = freeVars @ args
 
             let lInnerExp, lmap = lambdaLift innerExp

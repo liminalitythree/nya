@@ -111,7 +111,7 @@ module Infer =
 
     type private Constrait = (Type.T * Type.T)
 
-    let rec collectExpr (ae: ANyaExpr) : Constrait list =
+    let rec private collectExpr (ae: ANyaExpr) : Constrait list =
         match ae with
         | AList(_) -> failwith "List is unsupported for now i think"
 

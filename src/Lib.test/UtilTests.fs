@@ -15,10 +15,7 @@ type CurryTests(output: ITestOutputHelper) =
             @ [ (("arg" + x.ToString()) |> annotate Type.Num) ]) []
 
     let expr =
-        2.0
-        |> Number
-        |> annotate Type.Num
-        |> AAtom
+        2.0 |> Number |> annotate Type.Num |> AAtom
 
     [<Fact>]
     member __.``Util.curry works``() =
@@ -42,3 +39,16 @@ type CurryTests(output: ITestOutputHelper) =
         let unCurried = Util.unCurry curried
 
         unCurried |> should equal (args, expr)
+
+    [<Fact>]
+    member __.``Uncurry returns correct amount of args when there is only 1 arg``() =
+        let curried =
+            (("x" |> annotate Type.Num), "x" |> Identifier |> annotate Type.Num |> AAtom)
+            |> annotate (Type.Lambda(Type.Num, Type.Num))
+            |> ALambda
+
+        let args, _ = Util.unCurry curried
+
+        args.Length |> should equal 1
+        args.[0]
+        |> should equal ("x" |> annotate Type.Num)

@@ -58,7 +58,7 @@ module LambdaLift =
     // ! NOTE: expects the input expression to only have unique identifiers,
     // ! eg with Transform.transformUniqueNames
     // ! maybe
-    let rec lambdaLift (gen: Util.IdGen) (expr: ANyaExpr) : LNyaExpr * Map<LambdaId, LNyaExpr> =
+    let rec lambdaLift (gen: Util.IdGen) (expr: ANyaExpr) : LNyaExpr * Map<LambdaId, LiftedLambda> =
         let lambdaLift = lambdaLift gen
         match expr with
         | AList(_) -> failwith "list is not supported for now maybe maybe maybe"

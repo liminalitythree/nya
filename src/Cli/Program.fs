@@ -25,11 +25,11 @@ let main argv =
             let (annotated,inc) = Infer.incrementalInfer inc result
             printfn "%s" (Type.toString (Infer.typeOfAExpr annotated))
 
-            let gen = Lib.Util.IdGen "nyaref^"
+            let gen = Lib.Misc.IdGen "nyaref^"
 
             let uniqueNames = Transform.transformUniqueNames (ref Map.empty<string,string>) gen annotated
-            
-            let lgen = Lib.Util.IdGen "l^"
+
+            let lgen = Lib.Misc.IdGen "l^"
             let lifted,lmap = LambdaLift.lambdaLift lgen uniqueNames
 
             printfn "Lifted Lambdas: %A" lmap

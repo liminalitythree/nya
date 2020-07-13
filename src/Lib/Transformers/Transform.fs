@@ -13,13 +13,13 @@ module Transform =
     // =================================================================
     // Renaming all variables to unique names
 
-    let private genAndAdd (gen: Util.IdGen) (localEnv: Map<string,string> ref) old =
+    let private genAndAdd (gen: Misc.IdGen) (localEnv: Map<string,string> ref) old =
         let newName = gen.Gen()
         localEnv := ((!localEnv).Add(old, newName))
         newName
 
     // gives every variable/identifier to a unique name maybe
-    let rec transformUniqueNames (localEnv: Map<string, string> ref) (gen: Util.IdGen) (expr: ANyaExpr) : ANyaExpr =
+    let rec transformUniqueNames (localEnv: Map<string, string> ref) (gen: Misc.IdGen) (expr: ANyaExpr) : ANyaExpr =
         match expr with
         | AList(_) -> failwith "list is not supported for now maybe"
 

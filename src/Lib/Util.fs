@@ -8,8 +8,12 @@ module Util =
     let rec private curryBackwards (args: Infer.A<string> list) (expr: Infer.ANyaExpr) (retType: Type.T) =
         match args with
         | [] -> expr
-        | head::xs ->
-            let newExpr = (head, expr) |> Infer.annotate retType |> Infer.ALambda
+        | head :: xs ->
+            let newExpr =
+                (head, expr)
+                |> Infer.annotate retType
+                |> Infer.ALambda
+
             curryBackwards xs newExpr retType
 
     // reverses the input list and calls curryBackwards maybe
@@ -17,13 +21,12 @@ module Util =
         curryBackwards (List.rev args) expr retType
 
     // turns a curried lambda into one with an argument list i think maybe... maybe
-    let rec private doUnCurry (l: Infer.A<string> list) (expr: Infer.ANyaExpr) : Infer.A<string> list * Infer.ANyaExpr  =
+    let rec private doUnCurry (l: Infer.A<string> list) (expr: Infer.ANyaExpr): Infer.A<string> list * Infer.ANyaExpr =
         match expr with
-        | Infer.ALambda(lam) ->
-            let ident,inner = lam.E
-            doUnCurry (l @ [ident]) inner
+        | Infer.ALambda (lam) ->
+            let ident, inner = lam.E
+            doUnCurry (l @ [ ident ]) inner
 
         | _ -> (l, expr)
 
     let unCurry = doUnCurry []
-

@@ -11,11 +11,10 @@ module Type =
 
     let rec toString t =
         match t with
-        | Num    -> "num"
-        | Bool   -> "bool"
+        | Num -> "num"
+        | Bool -> "bool"
         | String -> "string"
 
-        | Lambda(fn, arg) ->
-            sprintf "%s -> %s" (toString fn) (toString arg)
+        | Lambda (fn, arg) -> sprintf "%s -> %s" (toString fn) (toString arg)
 
-        | Ident(s) -> "'" + s
+        | Ident (s) -> "'" + s

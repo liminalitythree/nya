@@ -8,7 +8,7 @@
   <ItemGroup>
     <Compile Include="UtilTests.fs" />
     <Compile Include="ParserTests.fs" />
-    <Compile Include="Static/InferTests.fs" />
+    <Compile Include="InferTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />

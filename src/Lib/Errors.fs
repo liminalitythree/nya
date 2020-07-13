@@ -8,7 +8,7 @@ module Errors =
     }
 
     let Error t lineInfo msg =
-        printf 
+        printf
             "Error at (line: %i, col: %i) in %s:\n%s\n"
             lineInfo.Line
             lineInfo.Col

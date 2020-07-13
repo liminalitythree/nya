@@ -3,16 +3,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="errors/Errors.fs" />
+    <Compile Include="Errors.fs" />
     <Compile Include="Misc.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Parser.fs" />
-    <Compile Include="Static/Type.fs" />
-    <Compile Include="Static/Infer.fs" />
-    <Compile Include="Codegen/codegen.fs" />
+    <Compile Include="Type.fs" />
+    <Compile Include="Infer.fs" />
+    <Compile Include="codegen.fs" />
     <Compile Include="Util.fs" />
-    <Compile Include="Transformers/Transform.fs" />
-    <Compile Include="Transformers/LambdaLift.fs" />
+    <Compile Include="Transform.fs" />
+    <Compile Include="LambdaLift.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />

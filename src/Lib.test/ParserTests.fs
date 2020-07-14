@@ -81,8 +81,6 @@ let ``Parses curried lambda expressions`` () =
 
     test <@ getParse "\\x.\\y.2" = (("x", inner, emptyPos) |> Lambda) @>
 
-
-
 [<Fact>]
 let ``Parses sequences`` () =
     test <@ getParse "(1)" = ([ num 1.0 ] |> withPos |> Seq) @>

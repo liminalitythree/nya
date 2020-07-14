@@ -1,6 +1,8 @@
 namespace Lib
 
 module Errors =
+    type Pos = FParsec.Position * FParsec.Position
+
     type LineInfo =
         { FileName: string
           Line: int

@@ -7,10 +7,10 @@ type NyaAtom =
     | Bool of bool
 
 type NyaExpr =
-    | Seq of NyaExpr list
-    | List of NyaExpr list
-    | Apply of NyaExpr * NyaExpr
-    | Atom of NyaAtom
-    | Lambda of string * NyaExpr
-    | Let of string * NyaExpr
-    | Letrec of string * NyaExpr
+    | Seq of NyaExpr list * Errors.Pos
+    | List of NyaExpr list * Errors.Pos
+    | Apply of NyaExpr * NyaExpr * Errors.Pos
+    | Atom of NyaAtom * Errors.Pos
+    | Lambda of string * NyaExpr * Errors.Pos
+    | Let of string * NyaExpr * Errors.Pos
+    | Letrec of string * NyaExpr * Errors.Pos

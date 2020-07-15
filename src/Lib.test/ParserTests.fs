@@ -8,13 +8,13 @@ open Lib
 
 let getSuccess res =
     match res with
-    | Success (result, _, _) -> result
-    | Failure (errorMsg, _, _) -> failwithf "Parsing failed: %s" errorMsg
+    | Errors.NyaResult.Ok result -> result
+    | Errors.NyaResult.Error err -> failwithf "Parsing failed: %A" err
 
 let parseFails str =
     match Parser.parse str with
-    | Success (result, _, _) -> failwithf "Parsing succeeded (but it should have failed): %A" result
-    | Failure (_) -> true
+    | Errors.NyaResult.Ok result -> failwithf "Parsing succeeded (but it should have failed): %A" result
+    | Errors.NyaResult.Error (_) -> true
 
 let emptyPos =
     let pos1 = Position("", 1L, 1L, 1L)

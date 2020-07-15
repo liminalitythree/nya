@@ -16,6 +16,13 @@ let num = 2.0 |> Number |> withPos |> Atom
 let str = "hi" |> String |> withPos |> Atom
 let boolean = true |> Bool |> withPos |> Atom
 
+let mustOk =
+    function
+    | Errors.NyaResult.Ok ok -> ok
+    | Errors.NyaResult.Error err -> failwithf "%A" err
+
+let infer x y = infer x y |> mustOk
+
 [<Fact>]
 let ``TypeGenerator works as expected`` () =
     let gen = TypeGenerator()

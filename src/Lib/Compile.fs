@@ -10,11 +10,8 @@ module Compile =
         let uniqueNameGen = Misc.IdGen("nyaref^")
         let lambdaIdGen = Misc.IdGen("lam^")
 
-        let a =
-            source
-            |> Parser.parse
-            >>= (Infer.infer env)
-            |>> (Transform.transformUniqueNames (ref Map.empty<string, string>) uniqueNameGen)
-            |>> (LambdaLift.lambdaLift lambdaIdGen)
-
-        a
+        source
+        |> Parser.parse
+        >>= (Infer.infer env)
+        |>> (Transform.transformUniqueNames (ref Map.empty<string, string>) uniqueNameGen)
+        |>> (LambdaLift.lambdaLift lambdaIdGen)

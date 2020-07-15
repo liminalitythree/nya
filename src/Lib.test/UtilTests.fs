@@ -7,6 +7,12 @@ open Swensen.Unquote
 open Lib
 open Lib.Infer
 
+let emptyPos =
+    let pos1 = FParsec.Position("", 1L, 1L, 1L)
+    Errors.Pos(pos1, pos1)
+
+let withPos x = (x, emptyPos)
+
 type CurryTests(output: ITestOutputHelper) =
     let args: Infer.A<string> list =
         seq { 1 .. 3 }
@@ -15,7 +21,11 @@ type CurryTests(output: ITestOutputHelper) =
             @ [ (("arg" + x.ToString()) |> annotate Type.Num) ]) []
 
     let expr =
-        2.0 |> Number |> annotate Type.Num |> AAtom
+        2.0
+        |> Number
+        |> annotate Type.Num
+        |> withPos
+        |> AAtom
 
     [<Fact>]
     member __.``Util.curry works``() =
@@ -25,7 +35,7 @@ type CurryTests(output: ITestOutputHelper) =
         let arg2 = annotate Type.Num "arg2"
         let arg3 = annotate Type.Num "arg3"
 
-        let lambdaNum = annotate Type.Num >> ALambda
+        let lambdaNum = annotate Type.Num >> withPos >> ALambda
 
         let expected =
             (arg1, (arg2, (arg3, expr) |> lambdaNum) |> lambdaNum)
@@ -43,8 +53,14 @@ type CurryTests(output: ITestOutputHelper) =
     [<Fact>]
     member __.``Uncurry returns correct amount of args when there is only 1 arg``() =
         let curried =
-            (("x" |> annotate Type.Num), "x" |> Identifier |> annotate Type.Num |> AAtom)
+            (("x" |> annotate Type.Num),
+             "x"
+             |> Identifier
+             |> annotate Type.Num
+             |> withPos
+             |> AAtom)
             |> annotate (Type.Lambda(Type.Num, Type.Num))
+            |> withPos
             |> ALambda
 
         let args, _ = Util.unCurry curried

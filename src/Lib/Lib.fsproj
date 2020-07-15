@@ -9,10 +9,11 @@
     <Compile Include="Parser.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Infer.fs" />
-    <Compile Include="codegen.fs" />
+    <Compile Include="Codegen.fs" />
     <Compile Include="Util.fs" />
     <Compile Include="Transform.fs" />
     <Compile Include="LambdaLift.fs" />
+    <Compile Include="Repl.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />

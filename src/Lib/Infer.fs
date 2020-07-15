@@ -63,7 +63,7 @@ module Infer =
     // =================================================================
     let private defaultEnv = ref Map.empty<string, Type.T>
 
-    let private annotateAtom a env =
+    let private annotateAtom a env pos =
         match a with
         | Number (_) -> an a Type.Num
         | Bool (_) -> an a Type.Bool
@@ -71,7 +71,9 @@ module Infer =
         | Identifier (s) ->
             match Map.tryFind s env with
             | Some (t) -> an a t
-            | None -> sprintf "Unknowon identifier: %s" s |> failwith
+            | None ->
+                sprintf "Unknowon identifier: %s" s
+                |> nyaFailWith pos TypeError
 
     let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
         match e with
@@ -85,7 +87,7 @@ module Infer =
              pos)
             |> ASeq
 
-        | Atom (a, pos) -> ((annotateAtom a !env), pos) |> AAtom
+        | Atom (a, pos) -> ((annotateAtom a !env pos), pos) |> AAtom
 
         | Apply (f, x, pos) ->
             let af = annotateExpr f env gen
@@ -173,7 +175,7 @@ module Infer =
              - Thus we use this information to impose a contraint on the unknown type placeholder.
        *)
 
-        | AApply (at, _) ->
+        | AApply (at, pos) ->
             let fn, arg = at.E
             let t = at.T
             match (typeOfAExpr fn) with
@@ -188,7 +190,9 @@ module Infer =
                 @ (collectExpr arg)
                 @ [ (typeOfAExpr fn, Type.Lambda(typeOfAExpr arg, t)) ]
 
-            | _ -> failwith "incorrect function application"
+            | _ ->
+                "Incorrect function application"
+                |> nyaFailWith pos TypeError
 
     // =================================================================
     // Unification
@@ -233,7 +237,9 @@ module Infer =
         // this is useful for calling a function that returns a function maybe?
         | Type.Lambda (a, b), Type.Lambda (x, y) -> unify [ (a, x); (b, y) ]
 
-        | _ -> failwith "mismatched types"
+        | _ ->
+            sprintf "Mismatched types: %s, %s" (Type.toString t1) (Type.toString t2)
+            |> nyaFailWithNoPos TypeError
 
     // applies a final set of substitutions on the annotated expr
     let rec private applyExpr (subs: Substitutions) (ae: ANyaExpr): ANyaExpr =

@@ -9,9 +9,10 @@ module Util =
         match args with
         | [] -> expr
         | head :: xs ->
+            let pos = Infer.getPosA expr
+
             let newExpr =
-                (head, expr)
-                |> Infer.annotate retType
+                (((head, expr) |> Infer.annotate retType), pos)
                 |> Infer.ALambda
 
             curryBackwards xs newExpr retType
@@ -23,7 +24,7 @@ module Util =
     // turns a curried lambda into one with an argument list i think maybe... maybe
     let rec private doUnCurry (l: Infer.A<string> list) (expr: Infer.ANyaExpr): Infer.A<string> list * Infer.ANyaExpr =
         match expr with
-        | Infer.ALambda (lam) ->
+        | Infer.ALambda (lam, _) ->
             let ident, inner = lam.E
             doUnCurry (l @ [ ident ]) inner
 

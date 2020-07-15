@@ -1,5 +1,7 @@
 namespace Lib
 
+open Errors
+
 module Infer =
     type private Environment = Map<string, Type.T>
 
@@ -14,23 +16,35 @@ module Infer =
 
     // Annotated Expression
     type ANyaExpr =
-        | ASeq of A<ANyaExpr list>
-        | AList of A<ANyaExpr list>
-        | AApply of A<ANyaExpr * ANyaExpr>
-        | AAtom of A<NyaAtom>
-        | ALambda of A<A<string> * ANyaExpr>
-        | ALet of A<string * ANyaExpr>
-        | ALetrec of Type.T * A<string * ANyaExpr>
+        | ASeq of A<ANyaExpr list> * Pos
+        | AList of A<ANyaExpr list> * Pos
+        | AApply of A<ANyaExpr * ANyaExpr> * Pos
+        | AAtom of A<NyaAtom> * Pos
+        | ALambda of A<A<string> * ANyaExpr> * Pos
+        | ALet of A<string * ANyaExpr> * Pos
+        | ALetrec of Type.T * A<string * ANyaExpr> * Pos
 
     let typeOfAExpr e =
         match e with
-        | ASeq (t) -> t.T
-        | AList (t) -> t.T
-        | AApply (t) -> t.T
-        | AAtom (t) -> t.T
-        | ALambda (t) -> t.T
-        | ALet (t) -> t.T
-        | ALetrec (_, t) -> t.T
+        | ASeq (t, _) -> t.T
+        | AList (t, _) -> t.T
+        | AApply (t, _) -> t.T
+        | AAtom (t, _) -> t.T
+        | ALambda (t, _) -> t.T
+        | ALet (t, _) -> t.T
+        | ALetrec (_, t, _) -> t.T
+
+    // ─── GET THE POSITION OF AN ANYAEXPR ────────────────────────────────────────────
+
+    let getPosA expr =
+        match expr with
+        | ASeq (_, p)
+        | AList (_, p)
+        | AApply (_, p)
+        | AAtom (_, p)
+        | ALambda (_, p)
+        | ALet (_, p)
+        | ALetrec (_, _, p) -> p
 
     // =================================================================
     // generates generic types maybe
@@ -51,33 +65,34 @@ module Infer =
 
     let private annotateAtom a env =
         match a with
-        | Number (_) -> an a Type.Num |> AAtom
-        | Bool (_) -> an a Type.Bool |> AAtom
-        | String (_) -> an a Type.String |> AAtom
+        | Number (_) -> an a Type.Num
+        | Bool (_) -> an a Type.Bool
+        | String (_) -> an a Type.String
         | Identifier (s) ->
             match Map.tryFind s env with
-            | Some (t) -> an a t |> AAtom
+            | Some (t) -> an a t
             | None -> sprintf "Unknowon identifier: %s" s |> failwith
 
     let rec private annotateExpr (e: NyaExpr) (env: Environment ref) (gen: TypeGenerator): ANyaExpr =
         match e with
         | List (_) -> failwith "List is unsupported for now i think"
 
-        | Seq (seq) ->
+        | Seq (seq, pos) ->
             let newEnv = ref env.Value
-            (seq.Tail
-             |> List.fold (fun acc x -> acc @ [ annotateExpr x newEnv gen ]) [ annotateExpr seq.Head newEnv gen ]
-             |> an) (typeOfAExpr (annotateExpr seq.[seq.Length - 1] newEnv gen))
+            ((seq.Tail
+              |> List.fold (fun acc x -> acc @ [ annotateExpr x newEnv gen ]) [ annotateExpr seq.Head newEnv gen ]
+              |> an) (typeOfAExpr (annotateExpr seq.[seq.Length - 1] newEnv gen)),
+             pos)
             |> ASeq
 
-        | Atom (a) -> annotateAtom a !env
+        | Atom (a, pos) -> ((annotateAtom a !env), pos) |> AAtom
 
-        | Apply (f, x) ->
+        | Apply (f, x, pos) ->
             let af = annotateExpr f env gen
             let ax = annotateExpr x env gen
-            an (af, ax) (gen.Gen()) |> AApply
+            ((an (af, ax) (gen.Gen())), pos) |> AApply
 
-        | Lambda (x, e) ->
+        | Lambda (x, e, pos) ->
             let ax = an x (gen.Gen())
             let newEnv = ref ((!env).Add(x, ax.T))
             let ae = annotateExpr e newEnv gen
@@ -85,21 +100,21 @@ module Infer =
             let alam =
                 an (ax, ae) ((ax.T, (typeOfAExpr ae)) |> Type.Lambda)
 
-            alam |> ALambda
+            (alam, pos) |> ALambda
 
-        | Let (i, e) ->
+        | Let (i, e, pos) ->
             let ae = annotateExpr e env gen
             let t = typeOfAExpr ae
             env := (!env).Add(i, t)
-            an (i, ae) t |> ALet
+            ((an (i, ae) t), pos) |> ALet
 
-        | Letrec (i, e) ->
+        | Letrec (i, e, pos) ->
             let recType = gen.Gen()
             let newEnv = ref ((!env).Add(i, recType))
             let ae = annotateExpr e newEnv gen
             let t = typeOfAExpr ae
             env := (!env).Add(i, t)
-            (recType, (an (i, ae) t)) |> ALetrec
+            (recType, (an (i, ae) t), pos) |> ALetrec
 
     // =================================================================
     // collect type constraints
@@ -111,7 +126,7 @@ module Infer =
         match ae with
         | AList (_) -> failwith "List is unsupported for now i think"
 
-        | ASeq (seq) ->
+        | ASeq (seq, _) ->
             let cs =
                 seq.E.Tail
                 |> List.fold (fun e x -> e @ (collectExpr x)) (collectExpr seq.E.Head)
@@ -121,11 +136,11 @@ module Infer =
 
 
         // ! i dont know whether this is right
-        | ALet (e) ->
+        | ALet (e, _) ->
             let _, expr = e.E
             collectExpr expr
 
-        | ALetrec (t, e) ->
+        | ALetrec (t, e, _) ->
             let _, expr = e.E
             [ (t, e.T) ] @ collectExpr expr
 
@@ -133,7 +148,7 @@ module Infer =
         // ! i hope this is correct
         | AAtom (_) -> []
 
-        | ALambda (t) ->
+        | ALambda (t, _) ->
             let i, ae = t.E
             match t.T with
             | Type.Lambda (it, e) ->
@@ -158,7 +173,7 @@ module Infer =
              - Thus we use this information to impose a contraint on the unknown type placeholder.
        *)
 
-        | AApply (at) ->
+        | AApply (at, _) ->
             let fn, arg = at.E
             let t = at.T
             match (typeOfAExpr fn) with
@@ -225,32 +240,32 @@ module Infer =
         match ae with
         | AList (_) -> failwith "List is unsupported for now i think"
 
-        | ASeq (seq) ->
+        | ASeq (seq, pos) ->
             let e = seq.E
 
             let applied =
                 e |> List.map (fun x -> applyExpr subs x)
 
-            an applied (apply subs seq.T) |> ASeq
+            ((an applied (apply subs seq.T)), pos) |> ASeq
 
 
         // ! i don't know whether this is right maybe
-        | ALet (e)
-        | ALetrec (_, e) ->
+        | ALet (e, _)
+        | ALetrec (_, e, _) ->
             let _, expr = e.E
             applyExpr subs expr
 
-        | AAtom (atom) -> an atom.E (apply subs atom.T) |> AAtom
+        | AAtom (atom, pos) -> ((an atom.E (apply subs atom.T)), pos) |> AAtom
 
-        | ALambda (lam) ->
+        | ALambda (lam, pos) ->
             let id, e = lam.E
             let idt = id.E |> annotate (apply subs id.T)
-            an (idt, applyExpr subs e) (apply subs lam.T)
+            ((an (idt, applyExpr subs e) (apply subs lam.T)), pos)
             |> ALambda
 
-        | AApply (app) ->
+        | AApply (app, pos) ->
             let fn, arg = app.E
-            an (applyExpr subs fn, applyExpr subs arg) (apply subs app.T)
+            ((an (applyExpr subs fn, applyExpr subs arg) (apply subs app.T)), pos)
             |> AApply
 
     (* runs HMTI step-by-step

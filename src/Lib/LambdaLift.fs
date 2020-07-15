@@ -1,6 +1,8 @@
 namespace Lib
 
 open Infer
+open Errors
+open Misc
 
 module LambdaLift =
     // note, returned list may have duplicates
@@ -9,31 +11,31 @@ module LambdaLift =
         match expr with
         | AList (_) -> failwith "lists are not supported yet i think maybe sorry maybe"
 
-        | ASeq (seq) ->
+        | ASeq (seq, _) ->
             seq.E
             |> List.fold (fun e x -> e @ getFreeVariables ignore x) []
 
-        | AApply (apply) ->
+        | AApply (apply, _) ->
             let f, x = apply.E
             (getFreeVariables ignore f)
             @ (getFreeVariables ignore x)
 
-        | AAtom (atom) ->
+        | AAtom (atom, _) ->
             match atom.E with
             | Number (_)
             | String (_)
             | Bool (_) -> []
             | Identifier (ident) -> if ignore.Contains ident then [] else [ (ident, atom.T) ]
 
-        | ALambda (lam) ->
+        | ALambda (lam, _) ->
             let arg, expr = lam.E
             getFreeVariables (ignore.Add arg.E) expr
 
-        | ALet (lett) ->
+        | ALet (lett, _) ->
             let _, expr = lett.E
             getFreeVariables ignore expr
 
-        | ALetrec (_, letrec) ->
+        | ALetrec (_, letrec, _) ->
             let self, expr = letrec.E
             getFreeVariables (ignore.Add self) expr
 
@@ -47,14 +49,14 @@ module LambdaLift =
 
     // lambda-lifted nyaexpr maybe
     type LNyaExpr =
-        | LSeq of Infer.A<LNyaExpr list>
-        | LList of Infer.A<LNyaExpr list>
-        | LApply of Infer.A<LNyaExpr * LNyaExpr>
-        | LAtom of Infer.A<NyaAtom>
+        | LSeq of Infer.A<LNyaExpr list> * Pos
+        | LList of Infer.A<LNyaExpr list> * Pos
+        | LApply of Infer.A<LNyaExpr * LNyaExpr> * Pos
+        | LAtom of Infer.A<NyaAtom> * Pos
         // id * arg types * return type
-        | LLambdaRef of LambdaId * Type.T list * Type.T
-        | LLet of Infer.A<string * LNyaExpr>
-        | LLetrec of Type.T * A<string * LNyaExpr>
+        | LLambdaRef of LambdaId * Type.T list * Type.T * Pos
+        | LLet of Infer.A<string * LNyaExpr> * Pos
+        | LLetrec of Type.T * A<string * LNyaExpr> * Pos
 
     // Lambda Id, argument to the lambda, list of free variable arguments the lambda needs maybe
     type LiftedLambda =
@@ -74,24 +76,28 @@ module LambdaLift =
         match expr with
         | AList (_) -> failwith "list is not supported for now maybe maybe maybe"
 
-        | ASeq (seq) ->
+        | ASeq (seq, pos) ->
             let l, m =
                 seq.E
                 |> List.map lambdaLift
                 |> List.fold (fun (e, emap) (exp, map) -> (e @ [ exp ]), (mergeMaps emap map))
                        ([], Map.empty<LambdaId, LiftedLambda>)
 
-            ((l |> annotate seq.T |> LSeq), m)
+            ((l |> annotate seq.T |> withPos pos |> LSeq), m)
 
-        | AApply (apply) ->
+        | AApply (apply, pos) ->
             let f, x = apply.E
             let lf, m1 = lambdaLift f
             let lx, m2 = lambdaLift x
-            (((lf, lx) |> annotate apply.T |> LApply), mergeMaps m1 m2)
+            (((lf, lx)
+              |> annotate apply.T
+              |> withPos pos
+              |> LApply),
+             mergeMaps m1 m2)
 
-        | AAtom (atom) -> (atom |> LAtom), Map.empty
+        | AAtom (atom, pos) -> (atom |> withPos pos |> LAtom), Map.empty
 
-        | ALambda (lam) ->
+        | ALambda (lam, pos) ->
             let _, exp = lam.E
             let args, innerExp = Util.unCurry expr
 
@@ -109,7 +115,7 @@ module LambdaLift =
             let lId = gen.Gen()
 
             let lref =
-                (lId, (args |> List.map (fun x -> x.T)), lam.T)
+                (lId, (args |> List.map (fun x -> x.T)), lam.T, pos)
                 |> LLambdaRef
 
             let llambda =
@@ -123,18 +129,30 @@ module LambdaLift =
                 let lapply =
                     freeVars
                     |> List.fold (fun acc x ->
-                        (acc, (x.E |> Identifier |> annotate x.T |> LAtom))
+                        (acc,
+                         (x.E
+                          |> Identifier
+                          |> annotate x.T
+                          |> withPos pos
+                          |> LAtom))
                         |> annotate (typeOfAExpr innerExp)
+                        |> withPos pos
                         |> LApply) (lref)
 
                 (lapply, lmap.Add(lId, llambda))
 
-        | ALet (lett) ->
+        | ALet (lett, pos) ->
             let i, expr = lett.E
             let lexpr, lmap = lambdaLift expr
-            ((i, lexpr) |> annotate lett.T |> LLet), lmap
+            ((i, lexpr)
+             |> annotate lett.T
+             |> withPos pos
+             |> LLet),
+            lmap
 
-        | ALetrec (t, letrec) ->
+        | ALetrec (t, letrec, pos) ->
             let i, expr = letrec.E
             let lexpr, lmap = lambdaLift expr
-            ((t, (i, lexpr) |> annotate letrec.T) |> LLetrec), lmap
+            (((t, (i, lexpr) |> annotate letrec.T, pos)
+              |> LLetrec),
+             lmap)

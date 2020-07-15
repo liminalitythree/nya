@@ -34,3 +34,7 @@ module Misc =
         let pStart, _ = pos1
         let _, pEnd = pos2
         (pStart, pEnd) |> Errors.Pos
+
+    // ─── MAKE A TUPLE WITH AN ANY AND A POSITION ────────────────────────────────────
+
+    let withPos (y: Errors.Pos) x = (x, y)

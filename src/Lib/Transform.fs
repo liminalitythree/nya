@@ -7,6 +7,7 @@
 namespace Lib
 
 open Infer
+open Misc
 
 module Transform =
 
@@ -23,14 +24,15 @@ module Transform =
         match expr with
         | AList (_) -> failwith "list is not supported for now maybe"
 
-        | ASeq (seq) ->
+        | ASeq (seq, pos) ->
             let newEnv = ref localEnv.Value
             seq.E
             |> List.map (transformUniqueNames newEnv gen)
             |> annotate seq.T
+            |> withPos pos
             |> ASeq
 
-        | AAtom (atom) ->
+        | AAtom (atom, pos) ->
             match atom.E with
             | Number (_)
             | Bool (_)
@@ -42,20 +44,28 @@ module Transform =
                     uniqueName
                     |> Identifier
                     |> annotate atom.T
+                    |> withPos pos
                     |> AAtom
 
                 | None ->
                     let newName = genAndAdd gen localEnv ident
-                    newName |> Identifier |> annotate atom.T |> AAtom
+                    newName
+                    |> Identifier
+                    |> annotate atom.T
+                    |> withPos pos
+                    |> AAtom
 
-        | AApply (apply) ->
+        | AApply (apply, pos) ->
             let f, x = apply.E
             let uf = transformUniqueNames localEnv gen f
             let ux = transformUniqueNames localEnv gen x
 
-            (uf, ux) |> annotate apply.T |> AApply
+            (uf, ux)
+            |> annotate apply.T
+            |> withPos pos
+            |> AApply
 
-        | ALambda (lam) ->
+        | ALambda (lam, pos) ->
             let arg, expr = lam.E
             let newEnv = ref localEnv.Value
 
@@ -64,22 +74,28 @@ module Transform =
 
             let uexpr = transformUniqueNames newEnv gen expr
 
-            (newArg, uexpr) |> annotate lam.T |> ALambda
+            (newArg, uexpr)
+            |> annotate lam.T
+            |> withPos pos
+            |> ALambda
 
-        | ALet (lett) ->
+        | ALet (lett, pos) ->
             let ident, expr = lett.E
 
             let newIdent = genAndAdd gen localEnv ident
             let uexpr = transformUniqueNames localEnv gen expr
 
-            (newIdent, uexpr) |> annotate lett.T |> ALet
+            (newIdent, uexpr)
+            |> annotate lett.T
+            |> withPos pos
+            |> ALet
 
-        | ALetrec (t, letrec) ->
+        | ALetrec (t, letrec, pos) ->
             let ident, expr = letrec.E
             let newEnv = ref localEnv.Value
 
             let newIdent = genAndAdd gen newEnv ident
             let uexpr = transformUniqueNames newEnv gen expr
 
-            (t, ((newIdent, uexpr) |> annotate letrec.T))
+            (t, ((newIdent, uexpr) |> annotate letrec.T), pos)
             |> ALetrec

@@ -240,4 +240,11 @@ module Parser =
 
     let private nprogram = nexpr .>> eof
 
-    let parse str = run nprogram str
+    let parse str: Errors.NyaResult<NyaExpr> =
+        match run nprogram str with
+        | Success (result, _, _) -> result |> Errors.nOk
+        | Failure (errorMsg, _, _) ->
+            { Errors.NyaError.ErrPos = None
+              Errors.NyaError.Type = Errors.ParseError errorMsg
+              Errors.NyaError.Msg = "A parser error occured" }
+            |> Errors.nError

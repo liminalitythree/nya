@@ -3,7 +3,7 @@ namespace Lib
 open Errors
 
 module Infer =
-    type private Environment = Map<string, Type.T>
+    type Environment = Map<string, Type.T>
 
     // Annotated with type information
     type A<'a> = { T: Type.T; E: 'a }
@@ -281,13 +281,15 @@ module Infer =
    4. run the final set of substitutions on still unresolved types
    5. obtain a final annotated expression with resolved types *)
 
-    let infer (env: Environment ref) (e: NyaExpr): ANyaExpr =
+    let infer (env: Environment ref) (e: NyaExpr): NyaResult<ANyaExpr> =
         let gen = TypeGenerator()
 
-        let annotatedExpr = annotateExpr e env gen
-        let constraints = collectExpr annotatedExpr
-        let subs = unify constraints
-        applyExpr subs annotatedExpr
+        try
+            let annotatedExpr = annotateExpr e env gen
+            let constraints = collectExpr annotatedExpr
+            let subs = unify constraints
+            applyExpr subs annotatedExpr |> nOk
+        with NyaException err -> err |> nError
 
     type IncrementalInfer =
         { Env: Environment ref

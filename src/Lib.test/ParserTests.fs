@@ -11,8 +11,6 @@ let getSuccess res =
     | Success (result, _, _) -> result
     | Failure (errorMsg, _, _) -> failwithf "Parsing failed: %s" errorMsg
 
-let getParse = Parser.parse >> getSuccess
-
 let parseFails str =
     match Parser.parse str with
     | Success (result, _, _) -> failwithf "Parsing succeeded (but it should have failed): %A" result
@@ -23,6 +21,19 @@ let emptyPos =
     Errors.Pos(pos1, pos1)
 
 let withPos x = (x, emptyPos)
+
+let rec withEmptyPos (x: NyaExpr) =
+    match x with
+    | Seq (e, _) -> Seq(e |> List.map withEmptyPos, emptyPos)
+    | List (e, _) -> List(e |> List.map withEmptyPos, emptyPos)
+    | Apply (e1, e2, _) -> Apply(withEmptyPos e1, withEmptyPos e2, emptyPos)
+    | Atom (e, _) -> Atom(e, emptyPos)
+    | Lambda (i, e, _) -> Lambda(i, withEmptyPos e, emptyPos)
+    | Let (i, e, _) -> Let(i, withEmptyPos e, emptyPos)
+    | Letrec (i, e, _) -> Letrec(i, withEmptyPos e, emptyPos)
+
+let getParse =
+    Parser.parse >> getSuccess >> withEmptyPos
 
 let ident = Identifier >> withPos >> Atom
 let num = Number >> withPos >> Atom

@@ -4,6 +4,7 @@ module Errors =
     type Pos = FParsec.Position * FParsec.Position
 
     // ─── A PRETTY-PRINTED COMPILATON ERROR MAYBE ────────────────────────────────────
+
     type NErrorType =
         | ParseError of string
         | TypeError
@@ -16,6 +17,8 @@ module Errors =
           // Position where error occured
           ErrPos: Pos option
           Type: NErrorType }
+
+    // ─── CUSTOM RESULT TYPE ─────────────────────────────────────────────────────────
 
     [<RequireQualifiedAccess>]
     [<Struct>]
@@ -40,6 +43,8 @@ module Errors =
         static member inline (>>=)(x, uf) = nBind uf x
         static member inline (|>>)(x, m) = nMap m x
 
+    // ─── EXCEPTION TYPE ─────────────────────────────────────────────────────────────
+
     exception NyaException of NyaError
 
     let nyaFailWith pos errType msg =
@@ -57,3 +62,27 @@ module Errors =
               NyaError.Type = errType }
 
         raise (NyaException nError)
+
+    // ─── PRETTY-PRINTER ─────────────────────────────────────────────────────────────
+
+    let private posAsLineCol (position: FParsec.Position) =
+        sprintf "Line: %d, Col: %d" position.Line position.Column
+
+    let prettyPrintErr (source: string) (err: NyaError): string =
+        match err.Type with
+        | ParseError msg -> msg
+        | TypeError ->
+            let lines =
+                source.Replace('\r', ' ').Split [| '\n' |]
+
+            let posText =
+                match err.ErrPos with
+                | Some pos ->
+                    let start, finish = pos
+                    let line = lines.[int (finish.Line) - 1]
+                    sprintf "In: %s\n%s\nFrom: (%s), To: (%s)" finish.StreamName line (posAsLineCol start)
+                        (posAsLineCol finish)
+
+                | None -> ""
+
+            sprintf "A Type error occurred:\n%s\n%s" err.Msg posText

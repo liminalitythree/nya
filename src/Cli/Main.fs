@@ -11,6 +11,26 @@ let printAsRainbow (s: string) =
     Colorful.Console.WriteWithGradient(s, Drawing.Color.Yellow, Drawing.Color.Fuchsia, 14)
     Colorful.Console.ReplaceAllColorsWithDefaults()
 
+let doCompile (args: ParseResults<NyaArgs>): unit =
+    let sourcePath =
+        ((args.GetResult Compile).GetResult File)
+
+    let source =
+        IO.File.ReadAllText(sourcePath, Text.Encoding.UTF8)
+
+    let env = ref Map.empty<string, Type.T>
+
+    let res = Compile.compile source env
+
+    match res with
+    | Errors.NyaResult.Ok ok -> sprintf "%A" ok |> printAsRainbow
+    | Errors.NyaResult.Error err ->
+        err
+        |> Errors.prettyPrintErr source
+        |> printAsRainbow
+    ()
+
+
 [<EntryPoint>]
 let main argv =
     let argParser =
@@ -22,8 +42,7 @@ let main argv =
         let res =
             argParser.ParseCommandLine(inputs = argv, raiseOnUsage = true)
 
-        if res.Contains Compile
-        then printAsRainbow "compiling............................................... maybe"
+        if res.Contains Compile then doCompile res else printAsRainbow usage
     with e -> printAsRainbow e.Message
 
     // exit code maybe

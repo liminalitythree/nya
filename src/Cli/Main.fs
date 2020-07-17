@@ -8,7 +8,9 @@ open Args
 
 // prints the string s as a rainbow maybe
 let printAsRainbow (s: string) =
-    Colorful.Console.WriteWithGradient(s, Drawing.Color.Yellow, Drawing.Color.Fuchsia, 14)
+    let chars = s.ToCharArray() |> Seq.chunkBySize 14
+    for c in chars do
+        Colorful.Console.WriteWithGradient(c, Drawing.Color.Yellow, Drawing.Color.Fuchsia, 14)
     Colorful.Console.ReplaceAllColorsWithDefaults()
 
 let doCompile (args: ParseResults<NyaArgs>): unit =

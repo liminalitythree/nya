@@ -3,6 +3,7 @@ namespace Lib
 open Infer
 open Errors
 open Misc
+open FinalAst
 
 module LambdaLift =
     // note, returned list may have duplicates
@@ -44,25 +45,6 @@ module LambdaLift =
         |> Seq.distinct
         |> Seq.toList
 
-    type LambdaId = string
-
-
-    // lambda-lifted nyaexpr maybe
-    type LNyaExpr =
-        | LSeq of Infer.A<LNyaExpr list> * Pos
-        | LList of Infer.A<LNyaExpr list> * Pos
-        | LApply of Infer.A<LNyaExpr * LNyaExpr> * Pos
-        | LAtom of Infer.A<NyaAtom> * Pos
-        // id * arg types * return type
-        | LLambdaRef of LambdaId * Type.T list * Type.T * Pos
-        | LLet of Infer.A<string * LNyaExpr> * Pos
-        | LLetrec of Type.T * A<string * LNyaExpr> * Pos
-
-    // Lambda Id, argument to the lambda, list of free variable arguments the lambda needs maybe
-    type LiftedLambda =
-        { Id: string
-          Args: Infer.A<string> list
-          Expr: LNyaExpr }
 
     let private mergeMaps map1 map2 =
         Map.fold (fun acc key value -> Map.add key value acc) map1 map2
@@ -71,7 +53,7 @@ module LambdaLift =
     // ! NOTE: expects the input expression to only have unique identifiers,
     // ! eg with Transform.transformUniqueNames
     // ! maybe
-    let rec lambdaLift (gen: Misc.IdGen) (expr: ANyaExpr): LNyaExpr * Map<LambdaId, LiftedLambda> =
+    let rec lambdaLift (gen: Misc.IdGen) (expr: ANyaExpr): LNyaExpr * FunTable =
         let lambdaLift = lambdaLift gen
         match expr with
         | AList (_) -> failwith "list is not supported for now maybe maybe maybe"
@@ -81,7 +63,7 @@ module LambdaLift =
                 seq.E
                 |> List.map lambdaLift
                 |> List.fold (fun (e, emap) (exp, map) -> (e @ [ exp ]), (mergeMaps emap map))
-                       ([], Map.empty<LambdaId, LiftedLambda>)
+                       ([], Map.empty<FunId, NFunction>)
 
             ((l |> annotate seq.T |> withPos pos |> LSeq), m)
 
@@ -124,7 +106,7 @@ module LambdaLift =
                   Expr = lInnerExp }
 
             if freeVars.IsEmpty then
-                (lref, lmap.Add(lId, llambda))
+                (lref, lmap.Add(lId, llambda |> NFunction.Lambda))
             else
                 let lapply =
                     freeVars
@@ -139,7 +121,7 @@ module LambdaLift =
                         |> withPos pos
                         |> LApply) (lref)
 
-                (lapply, lmap.Add(lId, llambda))
+                (lapply, lmap.Add(lId, llambda |> NFunction.Lambda))
 
         | ALet (lett, pos) ->
             let i, expr = lett.E

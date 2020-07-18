@@ -33,8 +33,60 @@ module Codegen =
 
     // ─── CODE GENERATION FUNCTIONS ──────────────────────────────────────────────────
 
+    let rec fromLNyaExpr (il: ILProcessor) (expr: LNyaExpr) =
+        let fromLNyaExpr = fromLNyaExpr il
+        match expr with
+        | LList _ -> failwith "Lists are not supported for now maybe"
+
+        | LSeq (seq,_) ->
+            for item in seq.E do
+                fromLNyaExpr item
+
+        | LApply (_) -> () // idk
+
+        | LAtom (atom,_) ->
+            match atom.E with
+            | Number num ->
+                il.Emit(OpCodes.Ldc_R4, num)
+
+            | String str ->
+                il.Emit(OpCodes.Ldstr, str)
+
+            | Bool b ->
+                if b = true then
+                    il.Emit(OpCodes.Ldc_I4_1)
+                else
+                    il.Emit(OpCodes.Ldc_I4_0)
+
+        | LLet
+
+
     // generates code from a FunTable maybe
-    let fromFunTable (table: MFunTable) = 2
+    let fromFunTable
+        (table: MFunTable)
+        (assembly: AssemblyDefinition, modul: ModuleDefinition, programType: TypeDefinition)
+        =
+        let fromTableEntry (func: NFunction, method: MethodDefinition) =
+            match func with
+            | NFunction.Builtin -> ()
+            | NFunction.Lambda lambda ->
+
+        table |> Map.map ()
+
+    let genAssembly () =
+        let assembly =
+            AssemblyDefinition.CreateAssembly
+                (AssemblyNameDefinition("NyaProgram", System.Version()), "NyaProgram", ModuleKind.Console)
+
+        let modul = assembly.MainModule
+
+        let programType =
+            TypeDefinition
+                ("NyaProgram", "Program", (TypeAttributes.Class ||| TypeAttributes.Public), modul.TypeSystem.Object)
+
+        modul.Types.Add(programType)
+
+        (assembly, modul, programType)
 
     let test () =
         let assembly =

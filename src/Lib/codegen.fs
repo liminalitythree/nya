@@ -11,10 +11,24 @@ module Codegen =
     // FunTable with methods added to each function in it maybe
     type MFunTable = Map<FunId, NFunction * MethodDefinition>
 
-    // creates methods on the function in the funtable,
+    // creates methods (with no IL other than the builtins) on the function in the funtable,
     // returning a MFunTable
     // adds builtin methods too maybe
-    //let createMethods (table: FunTable) : MFunTable
+    let createMethods (modul: ModuleDefinition) (table: FunTable): MFunTable =
+        let mainDefinition =
+            MethodDefinition
+                ("NYA^MAIN",
+                 MethodAttributes.Public
+                 ||| MethodAttributes.Static,
+                 modul.TypeSystem.Void)
+
+        table
+        |> Map.fold (fun acc funId nFun ->
+            match nFun with
+            | NFunction.Builtin builtin -> acc.Add(funId, (nFun, builtin.GenMethodDefination modul))
+            | NFunction.MainFunction _ -> acc.Add(funId, (nFun, mainDefinition))
+            | NFunction.Lambda _ -> failwith "Lambda functions are not supported in codegen for now maybe")
+               Map.empty<FunId, NFunction * MethodDefinition>
 
 
     // ─── CODE GENERATION FUNCTIONS ──────────────────────────────────────────────────

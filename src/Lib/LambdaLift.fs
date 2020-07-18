@@ -40,6 +40,8 @@ module LambdaLift =
             let self, expr = letrec.E
             getFreeVariables (ignore.Add self) expr
 
+    // ─── UTILITY FUNCTIONS ──────────────────────────────────────────────────────────
+
     let getFreeVarsNoDupes expr ignore =
         getFreeVariables ignore expr
         |> Seq.distinct
@@ -48,6 +50,10 @@ module LambdaLift =
 
     let private mergeMaps map1 map2 =
         Map.fold (fun acc key value -> Map.add key value acc) map1 map2
+
+    // Turns the LNyaExpr into a MainFunction and adds it to the funtable
+    let lambdaLiftResToMainFunInFunTable ((expr, table): LNyaExpr * FunTable): FunTable =
+        table.Add("^MAIN", expr |> NFunction.MainFunction)
 
     // (hopefully) does lambda lifting
     // ! NOTE: expects the input expression to only have unique identifiers,

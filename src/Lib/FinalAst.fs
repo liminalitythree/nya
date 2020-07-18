@@ -30,6 +30,9 @@ module FinalAst =
     type NFunction =
         | Lambda of LiftedLambda
         | Builtin
+        // main function takes void params and returns void maybe
+        // maybe
+        | MainFunction of LNyaExpr
 
     // table of functions in the final program maybe
     type FunTable = Map<FunId, NFunction>

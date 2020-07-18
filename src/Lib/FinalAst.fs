@@ -29,7 +29,7 @@ module FinalAst =
     [<RequireQualifiedAccess>]
     type NFunction =
         | Lambda of LiftedLambda
-        | Builtin
+        | Builtin of Builtin
         // main function takes void params and returns void maybe
         // maybe
         | MainFunction of LNyaExpr

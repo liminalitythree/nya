@@ -8,10 +8,13 @@
     <Compile Include="Misc.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Type.fs" />
+    <Compile Include="Builtins/Builtin.fs" />
+    <Compile Include="Builtins/Add.fs" />
     <Compile Include="Infer.fs" />
     <Compile Include="Util.fs" />
     <Compile Include="Transform.fs" />
     <Compile Include="FinalAst.fs" />
+    <Compile Include="Builtins/BuiltinUtil.fs" />
     <Compile Include="LambdaLift.fs" />
     <Compile Include="Repl.fs" />
     <Compile Include="Compile.fs" />

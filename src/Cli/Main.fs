@@ -20,9 +20,7 @@ let doCompile (args: ParseResults<NyaArgs>): unit =
     let source =
         IO.File.ReadAllText(sourcePath, Text.Encoding.UTF8)
 
-    let env = ref Map.empty<string, Type.T>
-
-    let res = Compile.compile source env
+    let res = Compile.compile source
 
     match res with
     | Errors.NyaResult.Ok ok -> sprintf "%A" ok |> printAsRainbow

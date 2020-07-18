@@ -6,9 +6,10 @@
 namespace Lib
 
 module Compile =
-    let compile (source: string) (env: Infer.Environment ref) =
+    let compile (source: string) =
         let uniqueNameGen = Misc.IdGen("nyaref^")
         let lambdaIdGen = Misc.IdGen("lam^")
+        let env: Infer.Environment ref = ref BuiltinUtil.Env
 
         source
         |> Parser.parse

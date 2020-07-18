@@ -2,8 +2,26 @@ namespace Lib
 
 open Mono.Cecil
 open Mono.Cecil.Cil
+open FinalAst
+open Errors
 
 module Codegen =
+    // ─── UTILITY FUNCTIONS ──────────────────────────────────────────────────────────
+
+    // FunTable with methods added to each function in it maybe
+    type MFunTable = Map<FunId, NFunction * MethodDefinition>
+
+    // creates methods on the function in the funtable,
+    // returning a MFunTable
+    // adds builtin methods too maybe
+    //let createMethods (table: FunTable) : MFunTable
+
+
+    // ─── CODE GENERATION FUNCTIONS ──────────────────────────────────────────────────
+
+    // generates code from a FunTable maybe
+    let fromFunTable (table: MFunTable) = 2
+
     let test () =
         let assembly =
             AssemblyDefinition.CreateAssembly
